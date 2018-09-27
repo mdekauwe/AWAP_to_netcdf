@@ -3,6 +3,7 @@
 !--------------------------------------------------------------------------!
 PROGRAM awap_to_netcdf
 
+	use utils, only: get_unit
 	implicit none
 
 	integer :: iunit
@@ -19,7 +20,7 @@ PROGRAM awap_to_netcdf
 
 
 
-	CALL get_unit(iunit)
+	call get_unit(iunit)
 
 	print *, iunit
 
@@ -29,20 +30,3 @@ END PROGRAM awap_to_netcdf
 !--------------------------------------------------------------------------!
 !		     		E N D   P R O G R A M								               !
 !--------------------------------------------------------------------------!
-
-SUBROUTINE get_unit(iunit)
-
-  ! Find an unused unit to open a file.
-  implicit none
-
-  integer, intent(out) :: iunit
-  integer :: i
-  logical :: is_open = .FALSE.
-
-  do i = 200, 10000
-	  inquire ( UNIT=i, OPENED=is_open )
-	  if ( .NOT. is_open ) exit
-  end do
-  iunit = i
-
-END SUBROUTINE get_unit

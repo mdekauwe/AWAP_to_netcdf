@@ -1,28 +1,44 @@
-HOME =
-LIBS =
-INCLS =
-FFLAGS = -g -Wno-unused-dummy-argument -fbounds-check
+# Find all source files, create a list of corresponding object files
+SRCS=$(wildcard *.f90)
+OBJS=$(patsubst %.f90, %.o, $(SRCS))
+
+# Ditto for mods
+MODS=$(wildcard mod*.f90)
+MOD_OBJS=$(patsubst %.f90, %.o, $(MODS))
+
+# Compiler/Linker settings
 FC = gfortran
-
-# PROGRAM NAME
+FLFLAGS = -g
+FCFLAGS = -g -c -Wall -Wno-tabs
 PROGRAM = awap_to_netcdf
-SRCS = awap_to_netcdf.f90
-# MODULE NAME
-#MOD1 = constants
-#MOD2 = errors
-OBJS = 	$(SRCS:.f90=.o)
-############################################################
+PRG_OBJ = $(PROGRAM).o
 
-$(PROGRAM):	$(OBJS)
-			$(FC) -o $(PROGRAM) $(OBJS) $(LIBS) $(INCLS)
+# Clean the suffixes
+.SUFFIXES:
 
-$(PROGRAM).o:	$(PROGRAM).f90 #$(MOD1).f90 $(MOD2).f90
-			 	$(FC) -c $(PROGRAM).f90 ${INCLS} $(FFLAGS)
+# Set the suffixes we are interested in
+.SUFFIXES: .f90 .o
 
-#$(MOD1).o:	$(MOD1).f90
-#			$(FC) -c $(MOD1).f90 ${INCLS} $(FFLAGS)
+# make without parameters will make first target found.
+default : $(PROGRAM)
 
-#$(MOD2).o:	$(MOD2).f90
-#			$(FC) -c $(MOD2).f90 ${INCLS} $(FFLAGS)
+# Compiler steps for all objects
+$(OBJS) : %.o : %.f90
+	$(FC) $(FCFLAGS) -o $@ $<
+
+# Linker
+$(PROGRAM) : $(OBJS)
+	$(FC) $(FLFLAGS) -o $@ $^
+
 clean:
-	rm -f $(PROG) $(OBJS) *.mod
+	rm -rf $(OBJS) $(PROGRAM) $(patsubst %.o, %.mod, $(MOD_OBJS))
+
+.PHONY: default clean
+
+# Dependencies
+
+# Main program depends on all modules
+$(PRG_OBJ): $(MOD_OBJS)
+
+# Blocks and allocations depends on shared
+mod_blocks.o mod_allocations.o : mod_shared.o
