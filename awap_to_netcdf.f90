@@ -3,8 +3,9 @@
 !--------------------------------------------------------------------------!
 PROGRAM awap_to_netcdf
 
-	IMPLICIT NONE
+	implicit none
 
+	integer :: iunit
 
 	! 1. Iniitalise variable, arrays to store things, etc
 	! 2. Loop over years
@@ -18,9 +19,9 @@ PROGRAM awap_to_netcdf
 
 
 
-	CALL GET_UNIT(iunit)
+	CALL get_unit(iunit)
 
-
+	print *, iunit
 
 
 END PROGRAM awap_to_netcdf
@@ -29,19 +30,19 @@ END PROGRAM awap_to_netcdf
 !		     		E N D   P R O G R A M								               !
 !--------------------------------------------------------------------------!
 
-SUBROUTINE GET_UNIT(IUNIT)
+SUBROUTINE get_unit(iunit)
 
   ! Find an unused unit to open a file.
-  IMPLICIT NONE
+  implicit none
 
-  INTEGER, INTENT(OUT) :: IUNIT
-  INTEGER :: i
-  LOGICAL :: is_open = .FALSE.
+  integer, intent(out) :: iunit
+  integer :: i
+  logical :: is_open = .FALSE.
 
-  DO i = 200, 10000
-	  INQUIRE ( UNIT=i, OPENED=is_open )
-	  IF ( .NOT. is_open ) EXIT
-  END DO
-  IUNIT = i
+  do i = 200, 10000
+	  inquire ( UNIT=i, OPENED=is_open )
+	  if ( .NOT. is_open ) exit
+  end do
+  iunit = i
 
 END SUBROUTINE GET_UNIT
