@@ -45,4 +45,4 @@ SUBROUTINE get_unit(iunit)
   end do
   iunit = i
 
-END SUBROUTINE GET_UNIT
+END SUBROUTINE get_unit
