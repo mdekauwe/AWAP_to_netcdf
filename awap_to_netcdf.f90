@@ -7,7 +7,7 @@ PROGRAM awap_to_netcdf
 
 	integer :: iunit
 
-	! 1. Iniitalise variable, arrays to store things, etc
+	! 1. Initialise variable, arrays to store things, etc
 	! 2. Loop over years
 	! Read header file
 	! Open AWAP file for each variable and fill up arrays.
