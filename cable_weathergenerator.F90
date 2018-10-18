@@ -5,12 +5,15 @@ MODULE CABLE_WEATHERGENERATOR
   ! Parameters
   INTEGER, PARAMETER,PRIVATE :: sp = 8
   REAL(sp),PARAMETER,PRIVATE :: &
-       Pi         = 3.14159265 ,&            ! Pi
-       PiBy2      = 1.57079632 ,&            ! Pi/2
-       SecDay     = 86400.0    ,&            ! Seconds/day
-       SolarConst = 1370*SecDay/1e6 ,&       ! Solar constant [MJ/m2/day]
-       epsilon    = 0.736        ,&
-       SBoltz     = 5.67e-8  ! Stefan-Boltzmann constant [W/m2/K4]
+       Pi         = 3.14159265 ,&      ! Pi
+       PiBy2      = 1.57079632 ,&      ! Pi/2
+       SecDay     = 86400.0    ,&      ! Seconds/day
+       SolarConst = 1370*SecDay/1e6 ,& ! Solar constant [MJ/m2/day]
+       epsilon    = 0.736      ,&
+       SBoltz     = 5.67e-8    ,&      ! Stefan-Boltzmann constant [W/m2/K4]
+       RMWbyRMA   = 0.62188471         ! MMY From cable_bios_met_obs_params
+                      ! molecular wt of water [kg/mol] / atomic wt of C [kg/mol]
+
   ! Global variables
   TYPE WEATHER_GENERATOR_TYPE
      ! general
@@ -30,12 +33,11 @@ MODULE CABLE_WEATHERGENERATOR
           PrecipDay      ,&  ! 24hr-total precipitation [m/day] (current day = 24h from 0900 on previous day)
           SnowDay        ,&  ! 24hr-total precipitation [m/day] (current day = 24h from 0900 on previous day)
           PPaDay         ,&    ! 24hr-av pressure [Pa]
-!          VapPmbDay           ! 24hr-av water vapour pressure [mb]
           VapPPa0900     ,&  ! 9:00 water vapour pressure [Pa]
           VapPPa1500     ,&  ! 15:00 water vapour pressure [Pa]
           VapPPa0900Next ,&
           VapPPa1500Prev
-     
+
      ! Daily constants
      REAL(sp) :: DecRad                                   ! Declination in radians
      REAL(sp),DIMENSION(:),ALLOCATABLE :: &
@@ -68,6 +70,7 @@ MODULE CABLE_WEATHERGENERATOR
           Temp            ,&  ! temp   [degC]
           VapPPa          ,&  ! vapour pressure [Pa]
           PPa             ,&  ! pressure [Pa]
+          QV              ,&  ! Specific Humidity [kg/kg] MMY
           coszen              ! cos(theta)
 
   END TYPE WEATHER_GENERATOR_TYPE
@@ -116,7 +119,6 @@ SUBROUTINE WGEN_INIT( WG, np, latitude, dels )
   ALLOCATE ( WG%PPaDay             (np) )  ! 24hr-av pressure [Pa]
   ALLOCATE ( WG%VapPPa0900         (np) )  ! 9:00 water vapour pressure [Pa]
   ALLOCATE ( WG%VapPPa1500         (np) )  ! 15:00 water vapour pressure [Pa]
-  ! ALLOCATE ( WG%VapPmbDay          (np) )  ! 24hr-av vapour pressure [mb]
   ALLOCATE ( WG%PhiSd              (np) )  ! downward solar irradiance [W/m2]
   ALLOCATE ( WG%PhiLd              (np) )  ! down longwave irradiance  [W/m2]
   ALLOCATE ( WG%Precip             (np) )  ! precip [mm/h]
@@ -125,11 +127,13 @@ SUBROUTINE WGEN_INIT( WG, np, latitude, dels )
   ALLOCATE ( WG%Temp               (np) )  ! temp   [degC]
   ALLOCATE ( WG%VapPPa             (np) )  ! MMY vapour pressure [Pa] ! vapour pressure [mb] !!!!!!!!!!!!! should change to pa
   ALLOCATE ( WG%PPa                (np) )  ! MMY  pressure [Pa] ! pressure [mb]
+  ALLOCATE ( WG%QV                 (np) )  ! MMY  Specific Humidity [kg/kg]
   ALLOCATE ( WG%coszen             (np) )  ! cos(theta)
 
   WG%LatDeg(:) = latitude(:)
 
 END SUBROUTINE WGEN_INIT
+
 
 SUBROUTINE WGEN_DAILY_CONSTANTS( WG, np, YearDay )
 
@@ -165,8 +169,8 @@ YearRad    = 2.0*Pi*(YearDay-1)/365.0              ! day of year in radians
 
 ! DecRad = Declination in radians (+23.5 deg on 22 June, -23.5 deg on 22 Dec):
 WG%DecRad = 0.006918 - 0.399912*COS(YearRad) + 0.070257*SIN(YearRad)     &
-         - 0.006758*COS(2.0*YearRad) + 0.000907*SIN(2.0*YearRad)      &
-         - 0.002697*COS(3.0*YearRad) + 0.001480*SIN(3.0*YearRad)
+          - 0.006758*COS(2.0*YearRad) + 0.000907*SIN(2.0*YearRad)      &
+          - 0.002697*COS(3.0*YearRad) + 0.001480*SIN(3.0*YearRad)
                                         ! Paltridge and Platt eq [3.7]
 
 ! Daylength: HDLRad = Half Day Length in radians (dawn:noon = noon:dusk):
@@ -297,6 +301,7 @@ SUBROUTINE WGEN_SUBDIURNAL_MET(WG, np, itime)
 ritime = REAL(itime)     * WG%delT/3600.  ! Convert the current time to real
 rntime = REAL(WG%ndtime) * WG%delT/3600.  ! Convert ntime to real
 
+! SWdown/GSWP3.BC.SWdown.3hrMap
 ! Instantaneous downward hemispheric solar irradiance PhiSd
 TimeNoon = ritime/rntime - 0.5   ! Time in day frac (-0.5 to 0.5, zero at noon)
 TimeRad  = 2.0*Pi*TimeNoon       ! Time in day frac (-Pi to Pi, zero at noon)
@@ -317,7 +322,7 @@ WG%PhiSd    = WG%PhiSd*1e6/SecDay       ! Convert PhiSd: [MJ/m2/day] to [W/m2]
 ! -------------
 ! Precipitation
 ! -------------
-
+????????????????????????????????????????????????????????????????????????????????
 !Precip = PrecipDay*1000./rntime  ! convert from m/d to mm/h
 !Precip = (PrecipDay*1000.*9./24. + PrecipDayNext*1000.*15./24.)/rntime
 !Precip = (PrecipDay*1000.*9./24. + PrecipDayNext*1000.*15./24.)/24.  ! hourly precip [mm/h]
@@ -327,25 +332,25 @@ IF ( ABS(ritime-REAL(INT(ritime))) .GT. 1e-7) THEN
    STOP  "cable_weathergenerator.F90!"
 ENDIF
 IF ((ritime >= 15. .AND. ritime < 16.).OR.(ritime >= 18. .AND. ritime < 19.)) THEN
-   WG%Precip = WG%PrecipDay *1000./2.
-   WG%Snow   = WG%SnowDay*1000./2.
+   WG%Precip = WG%PrecipDay *1000./2. ! Rainf/GSWP3.BC.Rainf.3hrMap
+   WG%Snow   = WG%SnowDay*1000./2.    ! Snowf/GSWP3.BC.Snowf.3hrMap
 ELSE
    WG%Precip = 0.
    WG%Snow   = 0.
 ENDIF
-
+????????????????????????????????????????????????????????????????????????????????
 ! ----
 ! Wind
 ! ----
 
 WHERE (ritime >= WG%TimeSunrise .AND. ritime <= WG%TimeSunset) ! Sun is up
-   WG%Wind = WG%WindLite
+   WG%Wind = WG%WindLite ! Wind/GSWP3.BC.Wind.3hrMap
 ELSEWHERE ! Sun is down
    WG%Wind = WG%WindDark
 END WHERE
 
 ! -----------
-! Temperature
+! Temperature ! Tair/GSWP3.BC.Tair.3hrMap
 ! -----------
 ! Calculate temperature according to Cesaraccio et al 2001, including midnight to
 ! sunrise period using previous days info, and ignoring the period from after the
@@ -372,7 +377,7 @@ END WHERE
 ! -----------------------------------
 
 !WG%VapPmb = WG%VapPmbDay
-WG%PPa    = WG%PPaDay
+WG%PPa    = WG%PPaDay * 100. ! PSurf/GSWP3.BC.PSurf.3hrMap ! pressure 1 [mb] = 100 [Pa]
 ! ********************* MMY ************************
 IF (ritime <= 9.) THEN
     ! before 9am
@@ -382,8 +387,16 @@ ELSEIF (ritime > 9 .AND. ritime <= 15.) THEN
    WG%VapPPa = WG%VapPPa0900 + (WG%VapPPa1500 - WG%VapPPa0900) * (ritime - 9.)/(15.-9.)
 ELSEIF (ritime > 15.) THEN
    ! after 15:00
-   WG%VapPPa  = WG%VapPPa1500 + (WG%VapPPa0900Next - WG%VapPPa1500) * (ritime - 15.)/18.
+   WG%VapPPa = WG%VapPPa1500 + (WG%VapPPa0900Next - WG%VapPPa1500) * (ritime - 15.)/18.
 END IF
+WG%VapPPa = WG%VapPPa * 100.
+
+! -----------------------------------
+! Specific Humidity from cable_bios_met_obs_params - MMY
+! -----------------------------------
+WG%QV        = WG%VapPPa/WG%PPa*RMWbyRMA ! Qair/GSWP3.BC.Qair.3hrMap ! specific humidity (kg/kg)
+
+
 
 ! ----------------------------
 ! Downward longwave irradiance
@@ -392,7 +405,7 @@ END IF
 PhiLd_Swinbank = 335.97 * (((WG%Temp + 273.16) / 293.0)**6)   ! [W/m2] (Swinbank 1963)
 
 ! -------------------------------
-! Alternate longwave formulation
+! Alternate longwave formulation ! LWdown/GSWP3.BC.LWdown.3hrMap
 ! ----------------------------
 
 WG%PhiLd = epsilon * SBoltz * (WG%Temp + 273.16)**4       ! [W/m2] (Brutsaert)

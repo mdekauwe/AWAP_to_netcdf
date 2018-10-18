@@ -1,170 +1,208 @@
 !--------------------------------------------------------------------------!
-!		     		M A I N   P R O G R A M             	               !
+!		     		M A I N   P R O G R A M             	                         !
 !--------------------------------------------------------------------------!
+! USAGE:
+! INCLUDE:
+!--------------------------------------------------------------------------!
+! include 'type_def.F90'
+! include 'bios_io.F90'
+! include 'cable_bios_met_obs_params.F90'
+! include 'cable_weathergenerator.F90'
+! include 'bios_output.F90'
+
 PROGRAM awap_to_netcdf
 
     USE type_def_mod
-    USE bios_io_mod, ONLY: get_unit ! MMY
-	USE cable_weathergenerator,ONLY: WEATHER_GENERATOR_TYPE, WGEN_INIT, &
-									WGEN_DAILY_CONSTANTS, WGEN_SUBDIURNAL_MET
-    USE
+    USE bios_io_mod              ! MMY
+    USE cable_bios_met_obs_params
+    USE cable_weathergenerator,ONLY: WEATHER_GENERATOR_TYPE, WGEN_INIT, &
+                               WGEN_DAILY_CONSTANTS, WGEN_SUBDIURNAL_MET
+    USE bios_output
 
-	IMPLICIT NONE
 
-	
-    REAL, INTENT(INOUT) :: dels  ! time step size in seconds
-    INTEGER, INTENT(INOUT) ::  kstart, kend ,ktauday, counter
-  
-    LOGICAL,  SAVE :: call1 = .TRUE.
-    INTEGER(i4b)   :: iunit  
-  
-! *********************** MMY ***************************
-    
-    INTEGER, INTENT(INOUT) ::CurYear, YearStart, YearEnd
-    CHARACTER(200),DIMENSION(:),ALLOCATABLE :: rain_file, swdown_file, &
-                                wind_file, tairmax_file, tairmin_file, &
-                                vph09_file, vph15_file ! MMY
-    用指针
-     ？？？ 动态数组和,save 之间关系
+    IMPLICIT NONE
 
-! *******************************************************
+    REAL, INTENT(INOUT)    :: dels  ! time step size in seconds
+    INTEGER, INTENT(INOUT) :: kstart, kend ,ktauday, counter, YYYY
+    INTEGER, INTENT(INOUT) :: CurYear, YearStart, YearEnd ! MMY
 
-  ! 1. Initialise variable, arrays to store things, etc 
-  
-    dels      = 10800.     !it should be 3 hours = 3600*3  dels is time step size in seconds and is original from dels in bios.nml 
+    INTEGER(i4b)           :: iunit
+
+
+    ! input & output path
+    CHARACTER(LEN = 200)   :: input, output
+
+
+    ! input flt file path & name
+    CHARACTER(LEN = 200)   :: rain_path, swdown_path, wind_path, &
+                              tairmax_path, tairmin_path,        &
+                              vph09_path, vph15_path
+
+    ! output nc file path & name
+    CHARACTER(LEN = 200)   :: Rainf_name, Snow_name, LWdown_name, &
+                              SWdown_name, Tair_name, Wind_name,  &
+                              Qair_name, PSurf_name
+    ! output data netcdf file ID
+    INTEGER                :: ncid_rain, ncid_snow, ncid_lw, ncid_sw,&
+                              ncid_tair, ncid_wind, ncid_qair, ncid_ps
+
+    ! output variable ID
+    INTEGER                :: rainID, snowID, lwID, swID, &
+                              tairID, windID, qairID, psID
+
+
+    ! time variable ID for output nc file
+    INTEGER                :: raintID, snowtID, lwtID, swtID, &
+                              tairtID, windtID, qairtID, pstID
+
+    TYPE(WEATHER_GENERATOR_TYPE), SAVE :: WG
+    TYPE(FILENAME), SAVE               :: filename
+
+
+! ************ 1. Initialise variable, arrays to store things, etc *************
+
+    dels      = 10800.  ! It should be 3 hours = 3600*3. dels is time step size
+                        ! in seconds given by bios.nml
     kstart    = 1
-    ktauday   = INT(24.0*3600.0/dels) !ktauday = 8
-        
+    ktauday   = INT(24.0*3600.0/dels) ! ktauday = 8
+
     YearStart = 2000
-    YearEnd   = 2017 
-    CurYear   = 2000
-    
-    met_path     = "/short/dt6/mm3972/data/AWAP_data"
-    rain_path    = "/awap_rain_mm_day_2000-2017"
-    swdown_path  = "/awap_rad_MJ_day_2000-2017"
-    wind_path    = "/mcvicar_windspeed_ms_day_2000-2017"
-    tairmax_path = "/awap_tmax_C_day_2000-2017"
-    tairmin_path = "/awap_tmin_C_day_2000-2017"
-    vph09_path   = "/awap_vph09_hpa_day_2000-2017"
-    vph15_path   = "/awap_vph15_hpa_day_2000-2017"
-       
-    CALL cable_bios_init(dels,CurYear,kend,ktauday) !dels in bios.nml ! remove met by MMY
-       ! met is not given values in cable_bios_init subroutine
-       ! cable_bios_init is to:
+    YearEnd   = 2017
+    CurYear   = YearStart
+
+
+    CALL inout_path(filename)
+
+    input = TRIM(filename%path_in)
+
+    rain_path    = input//"/awap_rain_mm_day_2000-2017"
+    swdown_path  = input//"/awap_rad_MJ_day_2000-2017"
+    wind_path    = input//"/mcvicar_windspeed_ms_day_2000-2017"
+    tairmax_path = input//"/awap_tmax_C_day_2000-2017"
+    tairmin_path = input//"/awap_tmin_C_day_2000-2017"
+    vph09_path   = input//"/awap_vph09_hpa_day_2000-2017"
+    vph15_path   = input//"/awap_vph15_hpa_day_2000-2017"
+
+    CALL cable_bios_init(dels, CurYear, kend, ktauday, rain_path, filename) ! removing met -- MMY
+       ! INCLUDING:
        ! 1 CALL ReadArcFltHeader(iunit,landmaskhdr_file,MaskCols,MaskRows,MaskBndW,MaskBndS,MaskRes,NoDataVal)
        ! 2 CALL open_bios_met ! CANCELED BY MMY
        ! 3 CALL WGEN_INIT( WG, mland, latitude, dels )
-  
-    CALL read_filename(met_path,rain_path,rain_file)
-    CALL read_filename(met_path,swdown_path,swdown_file)
-    CALL read_filename(met_path,wind_path,wind_file)
-    CALL read_filename(met_path,tairmax_path,tairmax_file)
-    CALL read_filename(met_path,tairmin_path,tairmin_file)
-    CALL read_filename(met_path,vph09_path,vph09_file)
-    CALL read_filename(met_path,vph15_path,vph15_file)
-    
+
+    CALL read_filename(rain_path,filename%rain_file      )
+    CALL read_filename(swdown_path,filename%swdown_file  )
+    CALL read_filename(wind_path,filename%wind_file      )
+    CALL read_filename(tairmax_path,filename%tairmax_file)
+    CALL read_filename(tairmin_path,filename%tairmin_file)
+    CALL read_filename(vph09_path,filename%vph09_file    )
+    CALL read_filename(vph15_path,filename%vph15_file    )
+
     counter = 0
 
 	! 2. Loop over years
-YEAR: DO YYYY = YearStart, YearEnd ! YYYY= CABLE_USER%YearStart,  CABLE_USER%YearEnd
-	   CurYear = YYYY
-	   IF (( MOD( YYYY,  4 ) .EQ. 0 .AND. MOD( YYYY, 100 ) .NE. 0 ) .OR. MOD( YYYY,400 ) .EQ. 0 )   THEN ! whether the current year is leap year
-	      LOY = 366
-	   ELSE
-	      LOY = 365
+    DO YYYY = YearStart, YearEnd ! YYYY= CABLE_USER%YearStart,  CABLE_USER%YearEnd
+       CurYear = YYYY
+	     IF ((MOD(YYYY,4) == 0 .AND. MOD(YYYY,100) /= 0) .OR. MOD(YYYY,400) == 0)&
+       THEN                     ! leap year
+	        LOY = 366
+	     ELSE
+	        LOY = 365
        ENDIF
 
        kend = NINT(24.0*3600.0/dels) * LOY ! rounds its argument to the nearest whole number.
                                            ! kend is the total timesteps of the current year
-       
-       met_file_out = "/short/dt6/mm3972/data/AWAP_to_netcdf/"
-       Rainf_name   = "Rainf/AWAP.Rainf.3hr."//CurYear//".nc"
-       Snow_name    = "Snowf/AWAP.Snowf.3hr."//CurYear//".nc"
-       LWdown_name  = "LWdown/AWAP.LWdown.3hr."//CurYear//".nc"
-       SWdown_name  = "SWdown/AWAP.SWdown.3hr."//CurYear//".nc"
-       Tair_name    = "Tair/AWAP.Tair.3hr."//CurYear//".nc"
-       Wind_name    = "Wind/AWAP.Wind.3hr."//CurYear//".nc"
-       Qair_name    = "Qair/AWAP.Qair.3hr."//CurYear//".nc"
-       PSurf_name   = "PSurf/AWAP.PSurf.3hr."//CurYear//".nc"
-       
-       
-       
-       
- 
-DO ktau = kstart, kend
-    
- 	CALL  cable_bios_read_met(counter, CurYear, ktau, kend,(YYYY .EQ. YearEnd .AND. ktau .EQ. kend), dels )
-        ! SUBROUTINE cable_bios_read_met(MET, CurYear, ktau, kend, islast, dels )
-				! CALL WGEN_DAILY_CONSTANTS( WG, mland, INT(met%doy(1))+1 )
-				! CALL WGEN_SUBDIURNAL_MET( WG, mland, NINT(met%hod(1)*3600./dels) )
-   
+       output = TRIM(filename%path_out)
+
+       Rainf_name   = output//"Rainf/AWAP.Rainf.3hr."//CurYear//".nc"
+       Snow_name    = output//"Snowf/AWAP.Snowf.3hr."//CurYear//".nc"
+       LWdown_name  = output//"LWdown/AWAP.LWdown.3hr."//CurYear//".nc"
+       SWdown_name  = output//"SWdown/AWAP.SWdown.3hr."//CurYear//".nc"
+       Tair_name    = output//"Tair/AWAP.Tair.3hr."//CurYear//".nc"
+       Wind_name    = output//"Wind/AWAP.Wind.3hr."//CurYear//".nc"
+       Qair_name    = output//"Qair/AWAP.Qair.3hr."//CurYear//".nc"
+       PSurf_name   = output//"PSurf/AWAP.PSurf.3hr."//CurYear//".nc"
+
+       CALL create_output_file(Rainf_name, ncid_rain, rainID, raintID, "Rainf",&
+                              "Rainfall rate",                         &
+                              "rainfall_flux",                         &
+                              "Rainf", "kg m-2 s-1")
+
+       CALL create_output_file(Snow_name, ncid_snow, snowID, snowtID, "Snowf", &
+                              "Snowfall rate",                         &
+                              "snowfall_flux",                         &
+                              "Snowf","kg m-2 s-1")
+
+       CALL create_output_file(LWdown_name, ncid_lw, lwID, lwtID, "LWdown",    &
+                               "Downward Longwave Radiation",          &
+                               "surface_downwelling_longwave_flux_in_air", &
+                               "LWdown","W m-2")
+
+       CALL create_output_file(SWdown_name, ncid_sw, swID, swtID, "SWdown",    &
+                              "Downward Shortwave Radiation",          &
+                              "surface_downwelling_shortwave_flux_in_air", &
+                              "SWdown", "W m-2")
+
+       CALL create_output_file(Tair_name, ncid_tair, tairID, tairtID,"Tair",   &
+                              "Near surface air temperature",          &
+                              "air_temperature",                       &
+                              "Tair","K")
+
+       CALL create_output_file(Wind_name, ncid_wind, windID, windtID, "Wind",  &
+                              "Near surface wind speed",               &
+                              "wind_speed",                            &
+                              "Wind","m s-1")
+
+       CALL create_output_file(Qair_name, ncid_qair, qairID, qairtID, "Qair",  &
+                              "Near surface specific humidity",        &
+                              "specific_humidity",                     &
+                              "Qair", "kg kg-1")
+
+       CALL create_output_file(PSurf_name, ncid_ps, psID, pstID, "PSurf",      &
+                              "Surface Pressure",                      &
+                              "surface_air_pressure",                  &
+                              "PSurf", "Pa")
 
 
-    
+       DO ktau = kstart, kend
+
+          CALL cable_bios_read_met( WG, filename, counter, CurYear, YearStart, ktau, kend, dels )
+             ! INCLUDING:
+             ! 1 CALL WGEN_DAILY_CONSTANTS( WG, mland, INT(met%doy(1))+1 )
+             ! 2 CALL WGEN_SUBDIURNAL_MET( WG, mland, NINT(met%hod(1)*3600./dels) )
+
+          CALL write_output(WG%Precip, dels, CurYear, ktau, kend, .FALSE., &
+                            ncid_rain, rainID, raintID)
+          CALL write_output(WG%Snow  , dels, CurYear, ktau, kend, .FALSE., &
+                            ncid_snow, snowID, snowtID)
+          CALL write_output(WG%PhiLd , dels, CurYear, ktau, kend, .TRUE.,  &
+                            ncid_lw  , lwID  , lwtID  )
+          CALL write_output(WG%PhiSd , dels, CurYear, ktau, kend, .TRUE.,  &
+                            ncid_sw  , swID  , swtID  )
+          CALL write_output(WG%Temp  , dels, CurYear, ktau, kend, .FALSE., &
+                            ncid_tair, tairID, tairtID)
+          CALL write_output(WG%Wind  , dels, CurYear, ktau, kend, .TRUE.,  &
+                            ncid_wind, windID, windtID)
+          CALL write_output(WG%QV    , dels, CurYear, ktau, kend, .FALSE., &
+                            ncid_qair, qairID, qairtID)
+          CALL write_output(WG%PPa   , dels, CurYear, ktau, kend, .FALSE., &
+                            ncid_ps  , psID  , pstID  )
+
+       END DO ! END Do loop over timestep ktau
 
 
+       ok = NF90_CLOSE(ncid_rain)
+       ok = NF90_CLOSE(ncid_snow)
+       ok = NF90_CLOSE(ncid_lw  )
+       ok = NF90_CLOSE(ncid_sw  )
+       ok = NF90_CLOSE(ncid_tair)
+       ok = NF90_CLOSE(ncid_wind)
+       ok = NF90_CLOSE(ncid_qair)
+       ok = NF90_CLOSE(ncid_ps  )
 
-END DO ! END Do loop over timestep ktau
-END DO YEAR
-
-! **************************************** 输 出 ************************************
-
-    
-
-      ! 这里直接设置output  不需要met了
-
- WG%Precip(:) ! Rainf/GSWP3.BC.Rainf.3hrMap ! precip [mm/h]
- WG%Snow(:)   ! Snowf/GSWP3.BC.Snowf.3hrMap ! precip [mm/h]
- WG%PhiLD(iland) ! LWdown/GSWP3.BC.LWdown.3hrMap ! down longwave irradiance  [W/m2]
- WG%PhiSD(iland) ! SWdown/GSWP3.BC.SWdown.3hrMap ! downward solar irradiance [W/m2]
- WG%Temp(:) = WG%Temp(:) + 273.15  ! Tair/GSWP3.BC.Tair.3hrMap
- WG%Wind(iland) ! Wind/GSWP3.BC.Wind.3hrMap
- ! WG%QV needed to be defined
- WG%QV    = WG%VapPmb(iland)/WG%Pmb(iland)*RMWbyRMA ! Qair/GSWP3.BC.Qair.3hrMap ! specific humidity (kg/kg) 
- WG%Pmb   = WG%Pmb * 100 ! PSurf/GSWP3.BC.PSurf.3hrMap ! pressure 1 [mb] = 100 [Pa]
- 
- 
-
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	! Read header file
-	! Open AWAP file for each variable and fill up arrays.
-	! loop over years, days
-	! open AWAP file
-	! call weather generator
-	! write netcdf file
-
-
-
+    END DO !YEAR
 
 END PROGRAM awap_to_netcdf
 
 !--------------------------------------------------------------------------!
 !		     		E N D   P R O G R A M								               !
 !--------------------------------------------------------------------------!
-
-
-
-
-
-
-
-    
-
-
-
-
