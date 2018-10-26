@@ -22,11 +22,13 @@ PROGRAM awap_to_netcdf
 
     IMPLICIT NONE
 
-    REAL, INTENT(INOUT)    :: dels  ! time step size in seconds
-    INTEGER, INTENT(INOUT) :: kstart, kend ,ktauday, counter, YYYY
-    INTEGER, INTENT(INOUT) :: CurYear, YearStart, YearEnd ! MMY
-
-    INTEGER(i4b)           :: iunit
+    REAL      :: dels  ! time step size in seconds
+    INTEGER   :: kstart, kend, ktau, ktauday, counter, YYYY
+    INTEGER   :: CurYear, YearStart, YearEnd ! MMY
+    INTEGER   :: LOY
+   
+    REAL(sp),DIMENSION(:),ALLOCATABLE :: data_temp
+    INTEGER(i4b)                      :: iunit
 
 
     ! input & output path
@@ -56,7 +58,7 @@ PROGRAM awap_to_netcdf
                               tairtID, windtID, qairtID, pstID
 
     TYPE(WEATHER_GENERATOR_TYPE), SAVE :: WG
-    TYPE(FILENAME), SAVE               :: filename
+    TYPE(FILE_NAME), SAVE               :: filename
 
 
 ! ************ 1. Initialise variable, arrays to store things, etc *************
@@ -113,14 +115,14 @@ PROGRAM awap_to_netcdf
                                            ! kend is the total timesteps of the current year
        output = TRIM(filename%path_out)
 
-       Rainf_name   = output//"Rainf/AWAP.Rainf.3hr."//CurYear//".nc"
-       Snow_name    = output//"Snowf/AWAP.Snowf.3hr."//CurYear//".nc"
-       LWdown_name  = output//"LWdown/AWAP.LWdown.3hr."//CurYear//".nc"
-       SWdown_name  = output//"SWdown/AWAP.SWdown.3hr."//CurYear//".nc"
-       Tair_name    = output//"Tair/AWAP.Tair.3hr."//CurYear//".nc"
-       Wind_name    = output//"Wind/AWAP.Wind.3hr."//CurYear//".nc"
-       Qair_name    = output//"Qair/AWAP.Qair.3hr."//CurYear//".nc"
-       PSurf_name   = output//"PSurf/AWAP.PSurf.3hr."//CurYear//".nc"
+       Rainf_name   = output//"Rainf/AWAP.Rainf.3hr."//CHAR(CurYear)//".nc"
+       Snow_name    = output//"Snowf/AWAP.Snowf.3hr."//CHAR(CurYear)//".nc"
+       LWdown_name  = output//"LWdown/AWAP.LWdown.3hr."//CHAR(CurYear)//".nc"
+       SWdown_name  = output//"SWdown/AWAP.SWdown.3hr."//CHAR(CurYear)//".nc"
+       Tair_name    = output//"Tair/AWAP.Tair.3hr."//CHAR(CurYear)//".nc"
+       Wind_name    = output//"Wind/AWAP.Wind.3hr."//CHAR(CurYear)//".nc"
+       Qair_name    = output//"Qair/AWAP.Qair.3hr."//CHAR(CurYear)//".nc"
+       PSurf_name   = output//"PSurf/AWAP.PSurf.3hr."//CHAR(CurYear)//".nc"
 
        CALL create_output_file(Rainf_name, ncid_rain, rainID, raintID, "Rainf",&
                               "Rainfall rate",                         &
@@ -165,27 +167,38 @@ PROGRAM awap_to_netcdf
 
        DO ktau = kstart, kend
 
-          CALL cable_bios_read_met( WG, filename, counter, CurYear, YearStart, ktau, kend, dels )
+          CALL cable_bios_read_met( WG, filename, counter, CurYear, YearStart, YearEnd, ktau, kend, dels )
              ! INCLUDING:
              ! 1 CALL WGEN_DAILY_CONSTANTS( WG, mland, INT(met%doy(1))+1 )
              ! 2 CALL WGEN_SUBDIURNAL_MET( WG, mland, NINT(met%hod(1)*3600./dels) )
-
-          CALL write_output(WG%Precip, dels, CurYear, ktau, kend, .FALSE., &
+          
+          ALLOCATE(data_temp(mland))
+          
+          data_temp = WG%Precip
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .FALSE., &
                             ncid_rain, rainID, raintID)
-          CALL write_output(WG%Snow  , dels, CurYear, ktau, kend, .FALSE., &
+          data_temp = WG%Snow
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .FALSE., &
                             ncid_snow, snowID, snowtID)
-          CALL write_output(WG%PhiLd , dels, CurYear, ktau, kend, .TRUE.,  &
+          data_temp = WG%PhiLd
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .TRUE.,  &
                             ncid_lw  , lwID  , lwtID  )
-          CALL write_output(WG%PhiSd , dels, CurYear, ktau, kend, .TRUE.,  &
+          data_temp = WG%PhiSd
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .TRUE.,  &
                             ncid_sw  , swID  , swtID  )
-          CALL write_output(WG%Temp  , dels, CurYear, ktau, kend, .FALSE., &
+          data_temp = WG%Temp
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .FALSE., &
                             ncid_tair, tairID, tairtID)
-          CALL write_output(WG%Wind  , dels, CurYear, ktau, kend, .TRUE.,  &
+          data_temp = WG%Wind
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .TRUE.,  &
                             ncid_wind, windID, windtID)
-          CALL write_output(WG%QV    , dels, CurYear, ktau, kend, .FALSE., &
+          data_temp = WG%QV
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .FALSE., &
                             ncid_qair, qairID, qairtID)
-          CALL write_output(WG%PPa   , dels, CurYear, ktau, kend, .FALSE., &
+          data_temp = WG%PPa
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .FALSE., &
                             ncid_ps  , psID  , pstID  )
+          DEALLOCATE(data_temp)
 
        END DO ! END Do loop over timestep ktau
 
