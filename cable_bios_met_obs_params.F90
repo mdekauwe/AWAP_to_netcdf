@@ -13,7 +13,7 @@ MODULE cable_bios_met_obs_params
 
     IMPLICIT NONE
 
-????? Have been defined in awap_to_netcdf.f90. Need to define them here again?
+!????? Have been defined in awap_to_netcdf.f90. Need to define them here again?
     CHARACTER(200),DIMENSION(:),ALLOCATABLE :: rain_file, swdown_file, &
                                 wind_file, tairmax_file, tairmin_file, &
                                 vph09_file, vph15_file ! MMY
@@ -38,10 +38,10 @@ MODULE cable_bios_met_obs_params
     REAL(sp),     ALLOCATABLE :: wind_day(:)          ! MMY
     REAL(sp),     ALLOCATABLE :: tairmax_day(:)       ! Packed vector of daily AWAP/BIOS max air temp (deg C)
     REAL(sp),     ALLOCATABLE :: tairmin_day(:)       ! Packed vector of daily AWAP/BIOS min air temp (deg C)
-    REAL(sp),     ALLOCATABLE :: vph_0900(:)        ! MMY 9:00 water vapour pressure [Pa]
-    REAL(sp),     ALLOCATABLE :: vph_1500(:)        ! MMY 15:00 water vapour pressure [Pa]
-    REAL(sp),     ALLOCATABLE :: prev_tairmax_day(:)       ! Packed vector of previous day's AWAP/BIOS max air temp (deg C)
-    REAL(sp),     ALLOCATABLE :: next_tairmin_day(:)       ! Packed vector of next day's AWAP/BIOS min air temp (deg C)
+    REAL(sp),     ALLOCATABLE :: vph_0900(:)          ! MMY 9:00 water vapour pressure [Pa]
+    REAL(sp),     ALLOCATABLE :: vph_1500(:)          ! MMY 15:00 water vapour pressure [Pa]
+    REAL(sp),     ALLOCATABLE :: prev_tairmax_day(:)  ! Packed vector of previous day's AWAP/BIOS max air temp (deg C)
+    REAL(sp),     ALLOCATABLE :: next_tairmin_day(:)  ! Packed vector of next day's AWAP/BIOS min air temp (deg C)
     REAL(sp),     ALLOCATABLE :: prev_vph_1500(:)
     REAL(sp),     ALLOCATABLE :: next_vph_0900(:)
 
@@ -51,8 +51,8 @@ MODULE cable_bios_met_obs_params
 
     REAL(sp), PARAMETER :: SecDay = 86400.
 
-    TYPE(WEATHER_GENERATOR_TYPE), SAVE :: WG
-    TYPE(FILENAME), SAVE               :: filename
+    !TYPE(WEATHER_GENERATOR_TYPE) :: WG !,SAVE
+    !TYPE(FILE_NAME)              :: filename !,SAVE
 
   CONTAINS
 
@@ -61,6 +61,7 @@ MODULE cable_bios_met_obs_params
   SUBROUTINE cable_bios_init( dels, curyear, kend, ktauday, file_path, filename ) ! , call1
 
       USE bios_io_mod, ONLY: ReadArcFltHeader
+      USE IFPORT
 
       IMPLICIT NONE
 
@@ -69,23 +70,26 @@ MODULE cable_bios_met_obs_params
       INTEGER, INTENT(IN)    :: ktauday
       CHARACTER(200)         :: file_path
 
-      INTEGER(i4b) :: iunit
+      INTEGER(i4b) :: iunit, ok
       INTEGER(i4b) :: icol, irow, iland   ! Loop counters for cols, rows, land cells
       INTEGER(i4b), ALLOCATABLE :: ColRowGrid(:,:)      ! Temp grid to hold col or row numbers for packing to land_x or land_y
       CHARACTER(200)            :: hdr_file             ! hdr_file MMY
       INTEGER                   :: file_num
+      
+      TYPE(WEATHER_GENERATOR_TYPE) :: WG !,SAVE
+      TYPE(FILE_NAME)              :: filename !,SAVE
 ! ___________________________________________________________________________
 
       ! ALLOCATE memory for filename
-      ok = system('cd '//file_path)
-      ok = system('find . -name "*.flt" | wc -l  >filenum.txt')
-      ??? this sentense cannot apply on fortran, I dont know why
-      ??????????????????????
+      ok = systemqq('cd '//file_path)
+      ok = systemqq('find . -name "*.flt" | wc -l  >filenum.txt')
+      !??? this sentense cannot apply on fortran, I dont know why
+      !??????????????????????
       CALL GET_UNIT(iunit)
       OPEN (iunit, file="filenum.txt",status="old",action="read")
       READ (iunit, *) file_num
       CLOSE(iunit)
-      ok = system('rm filenum.txt')
+      ok = systemqq('rm filenum.txt')
 
       ALLOCATE ( filename%rain_file(file_num)    )
       ALLOCATE ( filename%swdown_file(file_num)  )
@@ -94,7 +98,6 @@ MODULE cable_bios_met_obs_params
       ALLOCATE ( filename%tairmin_file(file_num) )
       ALLOCATE ( filename%vph09_file(file_num)   )
       ALLOCATE ( filename%vph15_file(file_num)   )
-
 
     ! read in header
       hdr_file = file_path//"/2017/bom-rad-day-20170702-20170702.hdr"
@@ -120,7 +123,7 @@ MODULE cable_bios_met_obs_params
       FORALL (irow = 1:MaskRows) ColRowGrid(:,irow) = irow
       land_y = PACK(ColRowGrid,.true.)
 
-???? if the pack function the same as the data read in way? If are the data mismatched???
+!???? if the pack function the same as the data read in way? If are the data mismatched???
 
     ! translate cols and rows of land_x and land_y into corresponding lats and longs.
       MaskCtrW = MaskBndW + (MaskRes / 2.0) ! Convert western and southern
@@ -157,21 +160,25 @@ MODULE cable_bios_met_obs_params
 
 
 ! ******************************* cable_bios_read_met ******************************
-  SUBROUTINE cable_bios_read_met( WG, filename, counter, CurYear, YearStart, ktau, kend, dels )
+  SUBROUTINE cable_bios_read_met( WG, filename, counter, CurYear, YearStart, YearEnd, ktau, kend, dels )
 
 	! Read a single day of meteorology from all bios met files, updating the bios_rundate
 
       IMPLICIT NONE
 
-      INTEGER, INTENT(IN) :: counter, CurYear, YearStart, ktau, kend
-      REAL, INTENT(IN)    :: dels
-
+      INTEGER, INTENT(IN)    :: CurYear, YearStart, YearEnd, ktau, kend
+      INTEGER, INTENT(INOUT) :: counter !,SAVE
+      REAL, INTENT(IN)       :: dels
+     
       LOGICAL(lgt)        :: newday
       INTEGER(i4b)        :: iland       ! Loop counter through mland land cells
       REAL                :: hod, doy, year
-      LOGICAL(lgt)        :: error_status
+      INTEGER(i4b)       :: error_status
 
       CHARACTER(200)      :: vph09next_file, tairminnext_file ! MMY
+      
+      TYPE(WEATHER_GENERATOR_TYPE) :: WG !,SAVE
+      TYPE(FILE_NAME)              :: filename !,SAVE
 
     ! CABLE is calculated in every grid's tile,and landpt(:)%cstart is the position
     ! of 1st gridcell veg patch in main arrays, but in weathergenerator we don't

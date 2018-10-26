@@ -5,6 +5,7 @@ MODULE bios_output
 ! ******************************************************************************
 
     USE netcdf
+    USE type_def_mod
 
     IMPLICIT NONE
 
@@ -23,8 +24,9 @@ MODULE bios_output
 
       CHARACTER(LEN=200) :: fileout
       INTEGER :: ncid_out ! output data netcdf file ID
-      INTEGER :: tID, xID, yID ! dimension IDs
+      INTEGER :: tID, xID, yID ! dimension ID
       INTEGER :: tvar, latID, lonID, varID ! time,lat,lon variable ID
+      INTEGER :: x, y
       REAL,ALLOCATABLE :: lat_val(:),lon_val(:)
 
       CHARACTER(LEN=*), INTENT(IN) :: vname ! name of variable
@@ -83,11 +85,11 @@ MODULE bios_output
 
     ! in GWSP nc file lat is from south to north and lon is from 0 to 180 to 0
       DO x = 1, MaskRows
-         lat_val(x) = MaskCtrS + MaskRes * ( x - 1 ) ????
+         lat_val(x) = MaskCtrS + MaskRes * ( x - 1 ) !????
       END DO
 
       DO y = 1, MaskCols
-         lon_val(y) = MaskCtrW + MaskRes * ( y - 1) ?????
+         lon_val(y) = MaskCtrW + MaskRes * ( y - 1) !?????
       END DO
 
 
@@ -103,27 +105,33 @@ MODULE bios_output
 
 
   !********************************** MMY ************************************
-  SUBROUTINE write_output (met_1D, dels, CurYear, ktau, ocnmask, ncid_out, varID, tvar)
+  SUBROUTINE write_output (filename, met_1D, dels, CurYear, ktau, kend, ocnmask, ncid_out, varID, tvar)
     ! Writes model output variables and, if requested, calls
     ! energy and mass balance routines. This subroutine is called
     ! each timestep, but may only write to the output file periodically,
     ! depending on whether the user has specified that output should be
     ! aggregated, e.g. to monthly or 6-hourly averages.
-      USE type_def_mod, ONLY: mland, filename
+      USE type_def_mod, ONLY: mland, FILE_NAME
       USE bios_io_mod, ONLY: get_unit
       USE cable_bios_met_obs_params, ONLY: MaskCols, MaskRows
 
       IMPLICIT NONE
 
       REAL                :: dels, delh ! time step size in hour
-      INTEGER, INTENT(IN) :: CurYear, ktau ! timestep number in loop which include spinup
+      INTEGER, INTENT(IN) :: CurYear, ktau, kend ! timestep number in loop which include spinup
+      INTEGER, INTENT(IN) :: ncid_out, varID, tvar
       LOGICAL, INTENT(IN) :: ocnmask
       INTEGER             :: rows
-      REAL                :: timetemp ! temporary variable for storing time
+      INTEGER(i4b)        :: iunit
+      REAL(r_2), DIMENSION(1) :: timetemp ! temporary variable for storing time
 
-      REAL,DIMENSION(:),ALLOCATABLE      :: met_1D
-      REAL,DIMENSION(:,:),ALLOCATABLE    :: met_2D, met_2D_temp, mask_value
+
+      REAL(sp),DIMENSION(:),ALLOCATABLE      :: met_1D
+      REAL(sp),DIMENSION(:,:),ALLOCATABLE    :: met_2D, met_2D_temp, mask_value
       LOGICAL,DIMENSION(:,:),ALLOCATABLE :: mask_2D
+
+      TYPE(FILE_NAME)     :: filename
+
 
       ALLOCATE(met_1D(mland)                  )
       ALLOCATE(met_2D(MaskRows, MaskCols)     )

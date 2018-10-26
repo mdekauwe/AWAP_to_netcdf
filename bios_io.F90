@@ -4,7 +4,8 @@ MODULE bios_io_mod !    MMY
 ! INCLUDE:
 ! ******************************************************************************
 
-    USE type_def_mod, ONLY: filename
+    USE type_def_mod !, ONLY: FILE_NAME
+    USE IFPORT
 
     CONTAINS
 
@@ -15,12 +16,12 @@ MODULE bios_io_mod !    MMY
       IMPLICIT NONE
 
       CHARACTER(LEN = 200) :: arg
-      TYPE(FILENAME),SAVE  :: filename
+      TYPE(FILE_NAME)      :: filename !,SAVE
 
       IF ( IARGC() > 0 ) THEN
 
          CALL GETARG(1, arg)
-            ??????????? arg(1:2) ???????????
+         !   ??????????? arg(1:2) ???????????
          IF (arg(1:2) == '-u' .OR. arg(1:2) == '-h') THEN
             WRITE (*, *) '====== USAGE ======'
             WRITE (*, *) 'e.g...             '
@@ -42,8 +43,6 @@ MODULE bios_io_mod !    MMY
       END IF
 
   END SUBROUTINE inout_path
-
-
 
 ! From ./core/biogeophys/cable_common.F90
 
@@ -67,20 +66,20 @@ MODULE bios_io_mod !    MMY
 ! **************************** MMY ***************************
   SUBROUTINE read_filename(file_path, file_name)
 
-      USE bios_io_mod, ONLY: get_unit ! MMY
+      !USE bios_io_mod, ONLY: get_unit ! MMY
 
       IMPLICIT NONE
 
-      INTEGER        :: iunit
+      INTEGER        :: iunit, ok
       INTEGER        :: file_num
       CHARACTER(200) :: file_path
       CHARACTER(200),DIMENSION(:),ALLOCATABLE :: file_name
 
    ! read file name
-      ok = system('cd '//file_path)
-      ok = system('find . -name "*.flt" | sort -n  >namelist.txt')
-      ??? this sentense cannot apply on fortran, I dont know why
-      ??????????????????????
+      ok = systemqq('cd '//file_path)
+      ok = systemqq('find . -name "*.flt" | sort -n  >namelist.txt')
+      ! ??? this sentense cannot apply on fortran, I dont know why
+      ! ??????????????????????
 
       file_num = 0
 
@@ -97,7 +96,7 @@ MODULE bios_io_mod !    MMY
       READ (iunit, *) file_name
       CLOSE(iunit)
 
-      ok = system('rm namelist.txt')
+      ok = systemqq('rm namelist.txt')
 
   END SUBROUTINE read_filename
 
