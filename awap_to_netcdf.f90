@@ -26,7 +26,7 @@ PROGRAM awap_to_netcdf
     INTEGER   :: kstart, kend, ktau, ktauday, counter, YYYY
     INTEGER   :: CurYear, YearStart, YearEnd ! MMY
     INTEGER   :: LOY
-   
+
     REAL(sp),DIMENSION(:),ALLOCATABLE :: data_temp
     INTEGER(i4b)                      :: iunit
 
@@ -57,8 +57,8 @@ PROGRAM awap_to_netcdf
     INTEGER                :: raintID, snowtID, lwtID, swtID, &
                               tairtID, windtID, qairtID, pstID
 
-    TYPE(WEATHER_GENERATOR_TYPE), SAVE :: WG
-    TYPE(FILE_NAME), SAVE               :: filename
+    TYPE(WEATHER_GENERATOR_TYPE) :: WG
+    TYPE(FILE_NAME)              :: filename
 
 
 ! ************ 1. Initialise variable, arrays to store things, etc *************
@@ -100,6 +100,7 @@ PROGRAM awap_to_netcdf
     CALL read_filename(vph15_path,filename%vph15_file    )
 
     counter = 0
+    PRINT *, "Initialization is ready"
 
 	! 2. Loop over years
     DO YYYY = YearStart, YearEnd ! YYYY= CABLE_USER%YearStart,  CABLE_USER%YearEnd
@@ -110,6 +111,8 @@ PROGRAM awap_to_netcdf
 	     ELSE
 	        LOY = 365
        ENDIF
+
+       PRINT *,"Point 6 CurYear, LOY ", CurYear, LOY ! Debug
 
        kend = NINT(24.0*3600.0/dels) * LOY ! rounds its argument to the nearest whole number.
                                            ! kend is the total timesteps of the current year
@@ -171,33 +174,33 @@ PROGRAM awap_to_netcdf
              ! INCLUDING:
              ! 1 CALL WGEN_DAILY_CONSTANTS( WG, mland, INT(met%doy(1))+1 )
              ! 2 CALL WGEN_SUBDIURNAL_MET( WG, mland, NINT(met%hod(1)*3600./dels) )
-          
+
           ALLOCATE(data_temp(mland))
-          
+
           data_temp = WG%Precip
-          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .FALSE., &
-                            ncid_rain, rainID, raintID)
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
+                            .FALSE., ncid_rain, rainID, raintID)
           data_temp = WG%Snow
-          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .FALSE., &
-                            ncid_snow, snowID, snowtID)
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
+                            .FALSE., ncid_snow, snowID, snowtID)
           data_temp = WG%PhiLd
-          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .TRUE.,  &
-                            ncid_lw  , lwID  , lwtID  )
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
+                            .TRUE., ncid_lw  , lwID  , lwtID  )
           data_temp = WG%PhiSd
-          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .TRUE.,  &
-                            ncid_sw  , swID  , swtID  )
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
+                            .TRUE., ncid_sw  , swID  , swtID  )
           data_temp = WG%Temp
-          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .FALSE., &
-                            ncid_tair, tairID, tairtID)
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
+                            .FALSE., ncid_tair, tairID, tairtID)
           data_temp = WG%Wind
-          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .TRUE.,  &
-                            ncid_wind, windID, windtID)
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
+                            .TRUE., ncid_wind, windID, windtID)
           data_temp = WG%QV
-          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .FALSE., &
-                            ncid_qair, qairID, qairtID)
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
+                            .FALSE., ncid_qair, qairID, qairtID)
           data_temp = WG%PPa
-          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, .FALSE., &
-                            ncid_ps  , psID  , pstID  )
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
+                            .FALSE., ncid_ps  , psID  , pstID  )
           DEALLOCATE(data_temp)
 
        END DO ! END Do loop over timestep ktau
