@@ -5,7 +5,6 @@ MODULE bios_output
 ! ******************************************************************************
 
     USE netcdf
-    USE type_def_mod
 
     IMPLICIT NONE
 
@@ -13,8 +12,8 @@ MODULE bios_output
 
   CONTAINS
 
-  SUBROUTINE create_output_file( fileout, ncid_out, varID, tvar, vname, longname, &
-                                 standardname, almaname, vunits)
+  SUBROUTINE create_output_file(fileout,ncid_out,varID,tvar,vname,longname,&
+                                standardname, almaname, vunits)
     ! Creates netcdf output file, defines variables
 
       USE cable_bios_met_obs_params, ONLY: MaskCols, MaskRows, &
@@ -22,18 +21,22 @@ MODULE bios_output
                                            MaskRes, NoDataVal
       IMPLICIT NONE
 
-      CHARACTER(LEN=200) :: fileout
-      INTEGER :: ncid_out ! output data netcdf file ID
-      INTEGER :: tID, xID, yID ! dimension ID
-      INTEGER :: tvar, latID, lonID, varID ! time,lat,lon variable ID
-      INTEGER :: x, y
-      REAL,ALLOCATABLE :: lat_val(:),lon_val(:)
+      CHARACTER(LEN=200),INTENT(IN):: fileout
+
+      INTEGER, INTENT(OUT) :: ncid_out ! output data netcdf file ID
+      INTEGER, INTENT(OUT) :: varID, tvar ! var,time ID
 
       CHARACTER(LEN=*), INTENT(IN) :: vname ! name of variable
       CHARACTER(LEN=*), INTENT(IN) :: longname ! full variable name
       CHARACTER(LEN=*), INTENT(IN) :: standardname ! standard variable name
       CHARACTER(LEN=*), INTENT(IN) :: almaname !alma variable name
       CHARACTER(LEN=*), INTENT(IN) :: vunits ! variable units
+
+      INTEGER :: latID, lonID  ! lat, lon ID
+      INTEGER :: tID, xID, yID ! dimension ID
+      INTEGER :: x, y
+      REAL,ALLOCATABLE :: lat_val(:),lon_val(:)
+
 
     ! Create output file:
       ok = NF90_CREATE(TRIM(fileout), NF90_CLOBBER, ncid_out)
@@ -51,7 +54,7 @@ MODULE bios_output
       ok = NF90_PUT_ATT(ncid_out, tvar, 'long_name', "Time")
       ok = NF90_PUT_ATT(ncid_out, tvar, 'standard_name', "time")
       ok = NF90_PUT_ATT(ncid_out, tvar, 'calendar', "proleptic_gregorian")
-      ok = NF90_PUT_ATT(ncid_out, tvar, 'units', "hours since 1900-01-01 &
+      ok = NF90_PUT_ATT(ncid_out, tvar, 'units', "hours since 1901-01-01 &
              00:00:00")
     !!!!!! "proleptic_gregorian" is from GWSP
 
@@ -79,19 +82,21 @@ MODULE bios_output
     ! End netcdf define mode:
       ok = NF90_ENDDEF(ncid_out)
 
-
       ALLOCATE (lat_val(MaskRows))
       ALLOCATE (lon_val(MaskCols))
 
     ! in GWSP nc file lat is from south to north and lon is from 0 to 180 to 0
       DO x = 1, MaskRows
-         lat_val(x) = MaskCtrS + MaskRes * ( x - 1 ) !????
+         lat_val(x) = MaskCtrS + MaskRes * ( x - 1 )
       END DO
+
+      PRINT *, "Point 3 lat_val ",lat_val ! Debug
 
       DO y = 1, MaskCols
-         lon_val(y) = MaskCtrW + MaskRes * ( y - 1) !?????
+         lon_val(y) = MaskCtrW + MaskRes * ( y - 1 )
       END DO
 
+      PRINT *, "Point 4 lon_val ",lon_val ! Debug
 
       ! Write latitude and longitude variables:
       ok = NF90_PUT_VAR(ncid_out, latID, REAL(lat_val, 4))
@@ -104,43 +109,45 @@ MODULE bios_output
 
 
 
-  !********************************** MMY ************************************
-  SUBROUTINE write_output (filename, met_1D, dels, CurYear, ktau, kend, ocnmask, ncid_out, varID, tvar)
+! ==================================== MMY =====================================
+  SUBROUTINE write_output(filename, met_1D, dels, CurYear, ktau, kend, ocnmask,&
+                          ncid_out, varID, tvar)
     ! Writes model output variables and, if requested, calls
     ! energy and mass balance routines. This subroutine is called
     ! each timestep, but may only write to the output file periodically,
     ! depending on whether the user has specified that output should be
     ! aggregated, e.g. to monthly or 6-hourly averages.
-      USE type_def_mod, ONLY: mland, FILE_NAME
+      USE type_def_mod, ONLY: mland, file_name
       USE bios_io_mod, ONLY: get_unit
       USE cable_bios_met_obs_params, ONLY: MaskCols, MaskRows
 
       IMPLICIT NONE
 
-      REAL                :: dels, delh ! time step size in hour
+      REAL, INTENT(IN)    :: dels
       INTEGER, INTENT(IN) :: CurYear, ktau, kend ! timestep number in loop which include spinup
+      LOGICAL, INTENT(IN) :: ocnmask ! whether it is default value over ocean
       INTEGER, INTENT(IN) :: ncid_out, varID, tvar
-      LOGICAL, INTENT(IN) :: ocnmask
+
+      REAL                :: delh ! time step size in hour
       INTEGER             :: rows
       INTEGER(i4b)        :: iunit
       REAL(r_2), DIMENSION(1) :: timetemp ! temporary variable for storing time
 
-
-      REAL(sp),DIMENSION(:),ALLOCATABLE      :: met_1D
-      REAL(sp),DIMENSION(:,:),ALLOCATABLE    :: met_2D, met_2D_temp, mask_value
-      LOGICAL,DIMENSION(:,:),ALLOCATABLE :: mask_2D
+      REAL(sp),DIMENSION(:),ALLOCATABLE   :: met_1D
+      REAL(sp),DIMENSION(:,:),ALLOCATABLE :: met_2D, met_2D_temp, mask_value
+      LOGICAL,DIMENSION(:,:),ALLOCATABLE  :: mask_2D
 
       TYPE(FILE_NAME)     :: filename
 
 
       ALLOCATE(met_1D(mland)                  )
       ALLOCATE(met_2D(MaskRows, MaskCols)     )
-      ALLOCATE(mask_2D(MaskRows, MaskCols)    )
+      ALLOCATE(mask_2D(MaskCols, MaskRows)    )
       ALLOCATE(mask_value(MaskRows, MaskCols) )
-      ALLOCATE(met_2D_temp(MaskRows, MaskCols))
+      ALLOCATE(met_2D_temp(MaskCols, MaskRows))
 
 
-      met_2D  = -999.
+      met_2D_temp = -999.
 
       CALL GET_UNIT(iunit)
       OPEN (iunit, file=TRIM(filename%path_in)//TRIM(filename%swdown_file(1)), &
@@ -158,33 +165,34 @@ MODULE bios_output
          mask_2D = .TRUE.
       END IF
 
-      met_2D_temp  = unpack(met_1D, mask_2D, met_2D)
+      met_2D_temp  = UNPACK(met_1D, mask_2D, met_2D_temp)
+      ! Debug: need to check the map of default value distribution
+
 
     ! reverse lat
       DO rows = 1, MaskRows
-         met_2D(rows,:) = met_2D_temp(MaskRows + 1 - rows, :)
+         met_2D(rows,:) = met_2D_temp(:, MaskRows + 1 - rows)
+         ! TRICK, FORTRAN processes in a column priority way
       END do
 
 
       !!!!!!!! WIND & RADIATION OVER OCEAN ARE DEFAULT value
-                                     ! check whether the longwave and other var are default over ocean
+      ! check whether the longwave and other var are default over ocean
 
-      ! DEALLOCATE( met_1D )
+      DEALLOCATE(met_1D     )
       DEALLOCATE(mask_2D    )
       DEALLOCATE(mask_value )
       DEALLOCATE(met_2D_temp)
 
       delh = dels/3600.
     ! Write to temporary time variable:
-    ! hours from 1900-01-01-00:00
-      IF (CurYear > 1900) THEN
-         timetemp = DBLE((INT((CurYear - 1 - 1900)/4.)*(366+365*3) &
-                    + MOD((CurYear - 1 - 1900),4)*365)*24.         &
+    ! hours from 1901-01-01-00:00
+      IF (CurYear >= 1901) THEN
+         timetemp = DBLE((INT((CurYear - 1991)/4.)*(366+365*3) &
+                    + MOD((CurYear - 1991),4)*365)*24.         &
                     + (ktau-1)*delh)
-      ELSE IF (CurYear == 1900) THEN
-         timetemp = DBLE((ktau-1)*delh)
       ELSE
-         PRINT *, "error"
+         PRINT *, "ERROR: CurYear should be larger than 1990"
       END IF
 
     ! Write time variable for this output time step:

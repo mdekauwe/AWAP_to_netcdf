@@ -7,7 +7,7 @@ MODULE type_def_mod
 ! ******************************************************************************
 
     IMPLICIT NONE
-    save !????????? effective?????
+    SAVE ! superfluous
 
 ! =============== From ./offline/cable_bios_met_obs_params.F90 =================
 
@@ -16,7 +16,8 @@ MODULE type_def_mod
     INTEGER, PARAMETER :: i4b = selected_int_kind(9)
     INTEGER, PARAMETER :: i2b = selected_int_kind(4)
     INTEGER, PARAMETER :: i1b = selected_int_kind(2)
-    INTEGER, PARAMETER :: r_2 = SELECTED_REAL_KIND(12, 50) ! From cable_define_types.F90
+    ! From cable_define_types.F90
+    INTEGER, PARAMETER :: r_2 = SELECTED_REAL_KIND(12, 50)
     ! Define single and double precision real kind parameters:
     ! * Kind(1.0)   defines sp as the machine's default size for single precision
     ! * Kind(1.0d0) defines dp as the machine's default size for double precision
@@ -39,6 +40,5 @@ MODULE type_def_mod
                                                           vph09_file,   &
                                                           vph15_file ! MMY
     END TYPE FILE_NAME
-   
-    !TYPE(FILE_NAME)      :: filename
+
 END MODULE type_def_mod

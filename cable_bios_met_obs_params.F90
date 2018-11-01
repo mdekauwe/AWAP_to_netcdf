@@ -1,11 +1,10 @@
 MODULE cable_bios_met_obs_params
 ! ******************************************************************************
-! USAGE:
+! USAGE: Input routines for BIOS meteorology, remote sensing observations, and
+!        soil parameters for use in the CABLE land surface scheme.
 ! INCLUDE:
 ! ******************************************************************************
 
-! Input routines for BIOS meteorology, remote sensing observations, and soil
-! parameters for use in the CABLE land surface scheme.
     USE type_def_mod ! MMY
     USE bios_io_mod, ONLY: get_unit ! MMY
     USE cable_weathergenerator,ONLY: WEATHER_GENERATOR_TYPE, WGEN_INIT, &
@@ -13,23 +12,14 @@ MODULE cable_bios_met_obs_params
 
     IMPLICIT NONE
 
-!????? Have been defined in awap_to_netcdf.f90. Need to define them here again?
-    CHARACTER(200),DIMENSION(:),ALLOCATABLE :: rain_file, swdown_file, &
-                                wind_file, tairmax_file, tairmin_file, &
-                                vph09_file, vph15_file ! MMY
+! == From cable_IO_vars_module in cable_iovars.f90, but PIONTER -> ALLOCATABLE==
 
-    ! *************** MMY *****************
-    ! From cable_IO_vars_module in cable_iovars.f90, a little bit changes &
-    ! from PIONTER to ALLOCATABLE
     REAL, DIMENSION(:),ALLOCATABLE   :: latitude, longitude  ! Vectors for lat and long of each land cell
-    INTEGER, DIMENSION(:),ALLOCATABLE:: land_x,land_y      ! indicies of land in mask
+    INTEGER, DIMENSION(:),ALLOCATABLE:: land_x,land_y        ! indicies of land in mask
 
-    INTEGER(i4b) :: MaskCols, MaskRows  !  Landmask col and row dimensions
+    INTEGER(i4b) :: MaskCols, MaskRows  ! Landmask col and row dimensions
     REAL(sp)     :: MaskBndW, MaskBndS  ! Landmask outer bound dimensions in decimal degrees (West & South)
-    REAL(sp)     :: MaskCtrW, MaskCtrS
     REAL(sp)     :: MaskRes, NoDataVal  ! Landmask resolution (dec deg) and no-data value
-
-
 
 ! Define the daily bios met variables and file unit numbers which are required by multiple subroutines.
 
@@ -45,23 +35,24 @@ MODULE cable_bios_met_obs_params
     REAL(sp),     ALLOCATABLE :: prev_vph_1500(:)
     REAL(sp),     ALLOCATABLE :: next_vph_0900(:)
 
-
-    INTEGER(i4b),  SAVE :: rain_unit, swdown_unit, wind_unit, tairmax_unit, tairmin_unit, & ! Met file unit numbers
-                           vph09_unit,vph15_unit,tairminnext_unit,vph09next_unit ! MMY
+    INTEGER(i4b) :: rain_unit, swdown_unit, wind_unit, &
+                    tairmax_unit, tairmin_unit, & ! Met file unit numbers
+                    vph09_unit, vph15_unit,     & ! MMY
+                    tairminnext_unit, vph09next_unit ! MMY
 
     REAL(sp), PARAMETER :: SecDay = 86400.
 
-    !TYPE(WEATHER_GENERATOR_TYPE) :: WG !,SAVE
-    !TYPE(FILE_NAME)              :: filename !,SAVE
+    TYPE(WEATHER_GENERATOR_TYPE) :: WG !,SAVE
+    TYPE(FILE_NAME)              :: filename !,SAVE
 
   CONTAINS
 
 
-! ***************************** cable_bios_init ********************************
-  SUBROUTINE cable_bios_init( dels, curyear, kend, ktauday, file_path, filename ) ! , call1
+! ============================= cable_bios_init ================================
+  SUBROUTINE cable_bios_init(dels, curyear, kend, ktauday, file_path, filename)
 
       USE bios_io_mod, ONLY: ReadArcFltHeader
-      USE IFPORT
+      USE IFPORT ! for using systemqq
 
       IMPLICIT NONE
 
@@ -70,26 +61,27 @@ MODULE cable_bios_met_obs_params
       INTEGER, INTENT(IN)    :: ktauday
       CHARACTER(200)         :: file_path
 
-      INTEGER(i4b) :: iunit, ok
-      INTEGER(i4b) :: icol, irow, iland   ! Loop counters for cols, rows, land cells
-      INTEGER(i4b), ALLOCATABLE :: ColRowGrid(:,:)      ! Temp grid to hold col or row numbers for packing to land_x or land_y
-      CHARACTER(200)            :: hdr_file             ! hdr_file MMY
-      INTEGER                   :: file_num
-      
-      TYPE(WEATHER_GENERATOR_TYPE) :: WG !,SAVE
-      TYPE(FILE_NAME)              :: filename !,SAVE
+      INTEGER(i4b)   :: iunit, ok
+      INTEGER(i4b)   :: icol, irow, iland ! Loop counters for cols, rows, land cells
+      CHARACTER(200) :: hdr_file          ! hdr_file MMY
+      REAL(sp)       :: MaskCtrW, MaskCtrS
+      INTEGER        :: file_num
+      INTEGER(i4b), ALLOCATABLE :: ColRowGrid(:,:) ! Temp grid to hold col or row numbers for packing to land_x or land_y
+
+      !TYPE(WEATHER_GENERATOR_TYPE) :: WG !,SAVE
+      !TYPE(FILE_NAME)              :: filename !,SAVE
 ! ___________________________________________________________________________
 
       ! ALLOCATE memory for filename
       ok = systemqq('cd '//file_path)
       ok = systemqq('find . -name "*.flt" | wc -l  >filenum.txt')
-      !??? this sentense cannot apply on fortran, I dont know why
-      !??????????????????????
+
       CALL GET_UNIT(iunit)
       OPEN (iunit, file="filenum.txt",status="old",action="read")
       READ (iunit, *) file_num
       CLOSE(iunit)
       ok = systemqq('rm filenum.txt')
+      PRINT *,"PIONT 5 file_num ", file_num
 
       ALLOCATE ( filename%rain_file(file_num)    )
       ALLOCATE ( filename%swdown_file(file_num)  )
@@ -122,8 +114,6 @@ MODULE cable_bios_met_obs_params
       land_x = PACK(ColRowGrid,.true.)
       FORALL (irow = 1:MaskRows) ColRowGrid(:,irow) = irow
       land_y = PACK(ColRowGrid,.true.)
-
-!???? if the pack function the same as the data read in way? If are the data mismatched???
 
     ! translate cols and rows of land_x and land_y into corresponding lats and longs.
       MaskCtrW = MaskBndW + (MaskRes / 2.0) ! Convert western and southern
@@ -159,26 +149,24 @@ MODULE cable_bios_met_obs_params
   END SUBROUTINE cable_bios_init
 
 
-! ******************************* cable_bios_read_met ******************************
-  SUBROUTINE cable_bios_read_met( WG, filename, counter, CurYear, YearStart, YearEnd, ktau, kend, dels )
+! ============================ cable_bios_read_met =============================
+  SUBROUTINE cable_bios_read_met( WG, filename, counter, CurYear, YearStart, &
+                                  YearEnd, ktau, kend, dels )
 
 	! Read a single day of meteorology from all bios met files, updating the bios_rundate
 
       IMPLICIT NONE
 
       INTEGER, INTENT(IN)    :: CurYear, YearStart, YearEnd, ktau, kend
-      INTEGER, INTENT(INOUT) :: counter !,SAVE
+      INTEGER, INTENT(INOUT) :: counter
       REAL, INTENT(IN)       :: dels
-     
+
       LOGICAL(lgt)        :: newday
       INTEGER(i4b)        :: iland       ! Loop counter through mland land cells
+      INTEGER(i4b)        :: error_status
       REAL                :: hod, doy, year
-      INTEGER(i4b)       :: error_status
 
       CHARACTER(200)      :: vph09next_file, tairminnext_file ! MMY
-      
-      TYPE(WEATHER_GENERATOR_TYPE) :: WG !,SAVE
-      TYPE(FILE_NAME)              :: filename !,SAVE
 
     ! CABLE is calculated in every grid's tile,and landpt(:)%cstart is the position
     ! of 1st gridcell veg patch in main arrays, but in weathergenerator we don't
@@ -192,6 +180,8 @@ MODULE cable_bios_met_obs_params
 
       IF ( newday ) THEN
           counter = counter + 1
+          PRINT *,'Point 5 counter ',counter
+
 ! ************************** MMY **********************************
           CALL GET_UNIT(rain_unit)  ! Rainfall
           OPEN (rain_unit, FILE=TRIM(filename%rain_file(counter)),        &
@@ -266,7 +256,7 @@ MODULE cable_bios_met_obs_params
 
     !***************************************
 
-          WG%WindDay        = wind_day !MMY  2.0 ! fixed value, pending ingestion of McVicar data set
+          WG%WindDay        = wind_day !MMY, from McVicar dataset
           WG%TempMinDay     = tairmin_day
           WG%TempMaxDay     = tairmax_day
           WG%VapPPa0900     = vph_0900

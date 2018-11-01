@@ -4,29 +4,28 @@ MODULE bios_io_mod !    MMY
 ! INCLUDE:
 ! ******************************************************************************
 
-    USE type_def_mod !, ONLY: FILE_NAME
-    USE IFPORT
+    USE ifort ! To use systemqq, the module is needed.
+    USE type_def_mod, ONLY: i4b, sp, FILE_NAME
 
-    CONTAINS
+  CONTAINS
 
-
-! ******************  This is from mgk and modified by MMY *********************
+! ======================= From MGK and modified by MMY =========================
   SUBROUTINE inout_path(filename)
 
       IMPLICIT NONE
 
       CHARACTER(LEN = 200) :: arg
-      TYPE(FILE_NAME)      :: filename !,SAVE
+      TYPE(FILE_NAME)      :: filename
 
       IF ( IARGC() > 0 ) THEN
 
          CALL GETARG(1, arg)
          !   ??????????? arg(1:2) ???????????
          IF (arg(1:2) == '-u' .OR. arg(1:2) == '-h') THEN
-            WRITE (*, *) '====== USAGE ======'
+            WRITE (*, *) '================== USAGE =================='
             WRITE (*, *) 'e.g...             '
             WRITE (*, *) '                   '
-            WRITE (*, *) './Makefile /short/dt6/mm3972/data/AWAP_data &
+            WRITE (*, *) 'Makefile /short/dt6/mm3972/data/AWAP_data &
                           /short/dt6/mm3972/data/AWAP_to_netcdf'
             WRITE (*, *) '                                           '
             STOP
@@ -44,7 +43,7 @@ MODULE bios_io_mod !    MMY
 
   END SUBROUTINE inout_path
 
-! From ./core/biogeophys/cable_common.F90
+! ================== From ./core/biogeophys/cable_common.F90 ===================
 
   SUBROUTINE get_unit(iunit)
 
@@ -63,10 +62,8 @@ MODULE bios_io_mod !    MMY
 
   END SUBROUTINE get_unit
 
-! **************************** MMY ***************************
+! =================================== MMY ======================================
   SUBROUTINE read_filename(file_path, file_name)
-
-      !USE bios_io_mod, ONLY: get_unit ! MMY
 
       IMPLICIT NONE
 
@@ -78,8 +75,9 @@ MODULE bios_io_mod !    MMY
    ! read file name
       ok = systemqq('cd '//file_path)
       ok = systemqq('find . -name "*.flt" | sort -n  >namelist.txt')
-      ! ??? this sentense cannot apply on fortran, I dont know why
-      ! ??????????????????????
+      ! ??? the finding cannot pass to sort command, I dont know why
+      ! ??? is it because I used system which uses different environment
+      ! ??? but systemqq uses the same environment
 
       file_num = 0
 
@@ -95,13 +93,13 @@ MODULE bios_io_mod !    MMY
       REWIND (iunit)
       READ (iunit, *) file_name
       CLOSE(iunit)
-
-      ok = systemqq('rm namelist.txt')
+      PRINT *, 'Point 1 : input filenames ',file_name ! Debug
+      ! Debug ok = systemqq('rm namelist.txt')
 
   END SUBROUTINE read_filename
 
 
-! From MODULE bios_misc_io./offline/cable_bios_met_obs_params.F90
+! ================ From ./offline/cable_bios_met_obs_params.F90 ================
 
   SUBROUTINE ReadArcFltHeader(iunit,Headfile,Cols,Rows,xLL,yLL,CellSize,NoDataVal)
 !-------------------------------------------------------------------------------
@@ -128,7 +126,9 @@ MODULE bios_io_mod !    MMY
       READ (iunit,*) Head, NoDataVal ! Missing data value
 
       CLOSE (unit=iunit)
+      ! Debug
+      PRINT *,"Point 2 Headfile:",Headfile,Cols,Rows,xLL,yLL,CellSize,NoDataVal
 
   END SUBROUTINE ReadArcFltHeader
 
-END MODULE bios_io_mod  ! MMY
+END MODULE bios_io_mod

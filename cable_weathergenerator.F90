@@ -55,7 +55,7 @@ MODULE CABLE_WEATHERGENERATOR
           TempNightRate      ,&
           TempNightRatePrev  ,&
           TempRangeDay       ,&
-          TempRangeAft      
+          TempRangeAft
 
      !   Solar and Temperature Params
      !   Hourly Met outgoing
@@ -375,7 +375,7 @@ END WHERE
 ! -----------------------------------
 
 !WG%VapPmb = WG%VapPmbDay
-WG%PPa    = WG%PPaDay * 100. ! PSurf/GSWP3.BC.PSurf.3hrMap ! pressure 1 [mb] = 100 [Pa]
+WG%PPa    = WG%PPaDay * 100. ! PSurf/GSWP3.BC.PSurf.3hrMap, pressure 1 [mb] = 100 [Pa]
 ! ********************* MMY ************************
 IF (ritime <= 9.) THEN
     ! before 9am
@@ -392,7 +392,7 @@ WG%VapPPa = WG%VapPPa * 100.
 ! -----------------------------------
 ! Specific Humidity from cable_bios_met_obs_params - MMY
 ! -----------------------------------
-WG%QV        = WG%VapPPa/WG%PPa*RMWbyRMA ! Qair/GSWP3.BC.Qair.3hrMap ! specific humidity (kg/kg)
+WG%QV     = WG%VapPPa/WG%PPa*RMWbyRMA ! Qair/GSWP3.BC.Qair.3hrMap, specific humidity (kg/kg)
 
 
 
