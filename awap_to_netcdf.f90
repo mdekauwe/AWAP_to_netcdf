@@ -9,7 +9,7 @@
 ! include 'cable_bios_met_obs_params.F90'
 ! include 'cable_weathergenerator.F90'
 ! include 'bios_output.F90'
-
+ 
 PROGRAM awap_to_netcdf
 
     USE type_def_mod
@@ -29,10 +29,6 @@ PROGRAM awap_to_netcdf
 
     REAL(sp),DIMENSION(:),ALLOCATABLE :: data_temp
     INTEGER(i4b)                      :: iunit
-
-
-    ! input & output path
-    CHARACTER(LEN = 200)   :: input, output
 
 
     ! input flt file path & name
@@ -57,8 +53,8 @@ PROGRAM awap_to_netcdf
     INTEGER                :: raintID, snowtID, lwtID, swtID, &
                               tairtID, windtID, qairtID, pstID
 
-    TYPE(WEATHER_GENERATOR_TYPE) :: WG
-    TYPE(FILE_NAME)              :: filename
+    TYPE(WEATHER_GENERATOR_TYPE),SAVE :: WG
+    TYPE(FILE_NAME),SAVE              :: filename
 
 
 ! ************ 1. Initialise variable, arrays to store things, etc *************
@@ -69,38 +65,37 @@ PROGRAM awap_to_netcdf
     ktauday   = INT(24.0*3600.0/dels) ! ktauday = 8
 
     YearStart = 2000
-    YearEnd   = 2017
+    YearEnd   = 2000
     CurYear   = YearStart
 
 
     CALL inout_path(filename)
 
-    input = TRIM(filename%path_in)
+    rain_path    = TRIM(filename%path_in)//"/awap_rain_mm_day_2000-2017"
+    !swdown_path  = TRIM(filename%path_in)//"/awap_rad_MJ_day_2000-2017"
+    !wind_path    = TRIM(filename%path_in)//"/mcvicar_windspeed_ms_day_2000-2017"
+    !tairmax_path = TRIM(filename%path_in)//"/awap_tmax_C_day_2000-2017"
+    !tairmin_path = TRIM(filename%path_in)//"/awap_tmin_C_day_2000-2017"
+    !vph09_path   = TRIM(filename%path_in)//"/awap_vph09_hpa_day_2000-2017"
+    !vph15_path   = TRIM(filename%path_in)//"/awap_vph15_hpa_day_2000-2017"
 
-    rain_path    = input//"/awap_rain_mm_day_2000-2017"
-    swdown_path  = input//"/awap_rad_MJ_day_2000-2017"
-    wind_path    = input//"/mcvicar_windspeed_ms_day_2000-2017"
-    tairmax_path = input//"/awap_tmax_C_day_2000-2017"
-    tairmin_path = input//"/awap_tmin_C_day_2000-2017"
-    vph09_path   = input//"/awap_vph09_hpa_day_2000-2017"
-    vph15_path   = input//"/awap_vph15_hpa_day_2000-2017"
-
-    CALL cable_bios_init(dels, CurYear, kend, ktauday, rain_path, filename) ! removing met -- MMY
+    CALL cable_bios_init(WG, dels, CurYear, kend, ktauday, rain_path, filename) ! removing met -- MMY
        ! INCLUDING:
        ! 1 CALL ReadArcFltHeader(iunit,landmaskhdr_file,MaskCols,MaskRows,MaskBndW,MaskBndS,MaskRes,NoDataVal)
        ! 2 CALL open_bios_met ! CANCELED BY MMY
        ! 3 CALL WGEN_INIT( WG, mland, latitude, dels )
 
-    CALL read_filename(rain_path,filename%rain_file      )
-    CALL read_filename(swdown_path,filename%swdown_file  )
-    CALL read_filename(wind_path,filename%wind_file      )
-    CALL read_filename(tairmax_path,filename%tairmax_file)
-    CALL read_filename(tairmin_path,filename%tairmin_file)
-    CALL read_filename(vph09_path,filename%vph09_file    )
-    CALL read_filename(vph15_path,filename%vph15_file    )
+    CALL read_filename(filename)
+    !CALL read_filename(swdown_path,filename%swdown_file  )
+    !CALL read_filename(wind_path,filename%wind_file      )
+    !CALL read_filename(tairmax_path,filename%tairmax_file)
+    !CALL read_filename(tairmin_path,filename%tairmin_file)
+    !CALL read_filename(vph09_path,filename%vph09_file    )
+    !CALL read_filename(vph15_path,filename%vph15_file    )
 
     counter = 0
-    PRINT *, "Initialization is ready"
+ 
+    !PRINT *, "POINT 7 filename%rain_file", filename%rain_file
 
 	! 2. Loop over years
     DO YYYY = YearStart, YearEnd ! YYYY= CABLE_USER%YearStart,  CABLE_USER%YearEnd
@@ -112,21 +107,22 @@ PROGRAM awap_to_netcdf
 	        LOY = 365
        ENDIF
 
-       PRINT *,"Point 6 CurYear, LOY ", CurYear, LOY ! Debug
+       PRINT *,"POINT 8 CurYear, LOY ", CurYear, LOY ! Debug
 
        kend = NINT(24.0*3600.0/dels) * LOY ! rounds its argument to the nearest whole number.
                                            ! kend is the total timesteps of the current year
-       output = TRIM(filename%path_out)
 
-       Rainf_name   = output//"Rainf/AWAP.Rainf.3hr."//CHAR(CurYear)//".nc"
-       Snow_name    = output//"Snowf/AWAP.Snowf.3hr."//CHAR(CurYear)//".nc"
-       LWdown_name  = output//"LWdown/AWAP.LWdown.3hr."//CHAR(CurYear)//".nc"
-       SWdown_name  = output//"SWdown/AWAP.SWdown.3hr."//CHAR(CurYear)//".nc"
-       Tair_name    = output//"Tair/AWAP.Tair.3hr."//CHAR(CurYear)//".nc"
-       Wind_name    = output//"Wind/AWAP.Wind.3hr."//CHAR(CurYear)//".nc"
-       Qair_name    = output//"Qair/AWAP.Qair.3hr."//CHAR(CurYear)//".nc"
-       PSurf_name   = output//"PSurf/AWAP.PSurf.3hr."//CHAR(CurYear)//".nc"
+       Rainf_name   = TRIM(filename%path_out)//"Rainf/AWAP.Rainf.3hr."//CHAR(CurYear)//".nc"
+       Snow_name    = TRIM(filename%path_out)//"Snowf/AWAP.Snowf.3hr."//CHAR(CurYear)//".nc"
+       LWdown_name  = TRIM(filename%path_out)//"LWdown/AWAP.LWdown.3hr."//CHAR(CurYear)//".nc"
+       SWdown_name  = TRIM(filename%path_out)//"SWdown/AWAP.SWdown.3hr."//CHAR(CurYear)//".nc"
+       Tair_name    = TRIM(filename%path_out)//"Tair/AWAP.Tair.3hr."//CHAR(CurYear)//".nc"
+       Wind_name    = TRIM(filename%path_out)//"Wind/AWAP.Wind.3hr."//CHAR(CurYear)//".nc"
+       Qair_name    = TRIM(filename%path_out)//"Qair/AWAP.Qair.3hr."//CHAR(CurYear)//".nc"
+       PSurf_name   = TRIM(filename%path_out)//"PSurf/AWAP.PSurf.3hr."//CHAR(CurYear)//".nc"
 
+       PRINT *,"POINT 9 Rainf_name ", Rainf_name ! Debug
+       
        CALL create_output_file(Rainf_name, ncid_rain, rainID, raintID, "Rainf",&
                               "Rainfall rate",                         &
                               "rainfall_flux",                         &
