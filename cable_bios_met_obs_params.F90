@@ -11,14 +11,14 @@ MODULE cable_bios_met_obs_params
                                    WGEN_DAILY_CONSTANTS, WGEN_SUBDIURNAL_MET
 
     IMPLICIT NONE
-
-! == From cable_IO_vars_module in cable_iovars.f90, but PIONTER -> ALLOCATABLE==
+ 
+! == From cable_IO_vars_module in cable_iovars.f90, but POINTER -> ALLOCATABLE==
 
     REAL, DIMENSION(:),ALLOCATABLE   :: latitude, longitude  ! Vectors for lat and long of each land cell
     INTEGER, DIMENSION(:),ALLOCATABLE:: land_x,land_y        ! indicies of land in mask
 
     INTEGER(i4b) :: MaskCols, MaskRows  ! Landmask col and row dimensions
-    REAL(sp)     :: MaskBndW, MaskBndS  ! Landmask outer bound dimensions in decimal degrees (West & South)
+    REAL(sp)     :: MaskCtrW, MaskCtrS
     REAL(sp)     :: MaskRes, NoDataVal  ! Landmask resolution (dec deg) and no-data value
 
 ! Define the daily bios met variables and file unit numbers which are required by multiple subroutines.
@@ -42,14 +42,14 @@ MODULE cable_bios_met_obs_params
 
     REAL(sp), PARAMETER :: SecDay = 86400.
 
-    TYPE(WEATHER_GENERATOR_TYPE) :: WG !,SAVE
-    TYPE(FILE_NAME)              :: filename !,SAVE
+    !TYPE(WEATHER_GENERATOR_TYPE),SAVE :: WG !
+    !TYPE(FILE_NAME),SAVE              :: filename !
 
   CONTAINS
 
 
 ! ============================= cable_bios_init ================================
-  SUBROUTINE cable_bios_init(dels, curyear, kend, ktauday, file_path, filename)
+  SUBROUTINE cable_bios_init(WG, dels, curyear, kend, ktauday, file_path, filename)
 
       USE bios_io_mod, ONLY: ReadArcFltHeader
       USE IFPORT ! for using systemqq
@@ -60,28 +60,36 @@ MODULE cable_bios_met_obs_params
       INTEGER, INTENT(INOUT) :: curyear, kend
       INTEGER, INTENT(IN)    :: ktauday
       CHARACTER(200)         :: file_path
+      CHARACTER(500)         :: commandline
 
       INTEGER(i4b)   :: iunit, ok
       INTEGER(i4b)   :: icol, irow, iland ! Loop counters for cols, rows, land cells
       CHARACTER(200) :: hdr_file          ! hdr_file MMY
-      REAL(sp)       :: MaskCtrW, MaskCtrS
+      REAL(sp)       :: MaskBndW, MaskBndS  ! Landmask outer bound dimensions in decimal degrees (West & South)
+    
       INTEGER        :: file_num
       INTEGER(i4b), ALLOCATABLE :: ColRowGrid(:,:) ! Temp grid to hold col or row numbers for packing to land_x or land_y
 
-      !TYPE(WEATHER_GENERATOR_TYPE) :: WG !,SAVE
-      !TYPE(FILE_NAME)              :: filename !,SAVE
+      TYPE(WEATHER_GENERATOR_TYPE) :: WG !,SAVE
+      TYPE(FILE_NAME)              :: filename !,SAVE
 ! ___________________________________________________________________________
 
       ! ALLOCATE memory for filename
-      ok = systemqq('cd '//file_path)
-      ok = systemqq('find . -name "*.flt" | wc -l  >filenum.txt')
+     
+      commandline = 'find '//TRIM(file_path)//' -name "*.flt" -fls ./temp.txt'
+      print*,commandline
+      ok = systemqq(commandline) 
+     
+      commandline = 'wc -l <./temp.txt  >./filenum.txt'
+      print*,commandline
+      ok = systemqq(commandline)
 
       CALL GET_UNIT(iunit)
       OPEN (iunit, file="filenum.txt",status="old",action="read")
       READ (iunit, *) file_num
       CLOSE(iunit)
-      ok = systemqq('rm filenum.txt')
-      PRINT *,"PIONT 5 file_num ", file_num
+      ok = systemqq('rm ./temp.txt')
+      PRINT *,"POINT 5 file_num ", file_num
 
       ALLOCATE ( filename%rain_file(file_num)    )
       ALLOCATE ( filename%swdown_file(file_num)  )
@@ -92,12 +100,12 @@ MODULE cable_bios_met_obs_params
       ALLOCATE ( filename%vph15_file(file_num)   )
 
     ! read in header
-      hdr_file = file_path//"/2017/bom-rad-day-20170702-20170702.hdr"
+      hdr_file = TRIM(file_path)//"/2017/bom-rain_recal-day-20170626-20170626.hdr"
       CALL GET_UNIT(iunit)
       CALL ReadArcFltHeader( iunit, hdr_file,    &
                              MaskCols, MaskRows, & ! Landmask col and row dimensions
                              MaskBndW, MaskBndS, & ! Landmask outer bound dimensions in decimal degrees (West & South)
-            								 MaskRes, NoDataVal )  ! Landmask resolution (dec deg) and no-data value
+            		     MaskRes, NoDataVal )  ! Landmask resolution (dec deg) and no-data value
 
     ! Allocate memory for input data
       mland = MaskCols * MaskRows  ! the amount of land points, defined in type_def_mod
@@ -145,7 +153,7 @@ MODULE cable_bios_met_obs_params
 
     ! Initialise Weather Generator
       CALL WGEN_INIT( WG, mland, latitude, dels )
-
+      PRINT *, "POINT 6 finished initialisation"
   END SUBROUTINE cable_bios_init
 
 
@@ -168,6 +176,9 @@ MODULE cable_bios_met_obs_params
 
       CHARACTER(200)      :: vph09next_file, tairminnext_file ! MMY
 
+      TYPE(WEATHER_GENERATOR_TYPE) :: WG
+      TYPE(FILE_NAME)              :: filename
+      
     ! CABLE is calculated in every grid's tile,and landpt(:)%cstart is the position
     ! of 1st gridcell veg patch in main arrays, but in weathergenerator we don't
     ! need to consider the veg patch, and the smallest unit shoulb be grid.
@@ -180,9 +191,11 @@ MODULE cable_bios_met_obs_params
 
       IF ( newday ) THEN
           counter = counter + 1
-          PRINT *,'Point 5 counter ',counter
+          PRINT *,'POINT 10 counter ',counter
 
 ! ************************** MMY **********************************
+          PRINT *,'POINT 11 TRIM(filename%rain_file(counter))',filename%rain_file(counter)
+
           CALL GET_UNIT(rain_unit)  ! Rainfall
           OPEN (rain_unit, FILE=TRIM(filename%rain_file(counter)),        &
                 FORM='BINARY', STATUS='OLD',IOSTAT=error_status)
@@ -225,6 +238,7 @@ MODULE cable_bios_met_obs_params
           READ (vph15_unit) vph_1500
           CLOSE(vph15_unit)
 
+          
           WG%TempMaxDayPrev = WG%TempMaxDay
           WG%VapPPa1500Prev = WG%VapPPa1500
 
@@ -284,7 +298,8 @@ MODULE cable_bios_met_obs_params
           CALL WGEN_DAILY_CONSTANTS( WG, mland, INT(doy)+1 )
 
       END IF !newday
-
+      
+      PRINT *, 'POINT 12 finished cable_bios_read_met'
 
 ! follow one file such rain to go through the program and find every procedure needed for tranlating the data
 ! and can chance the data format by using array instead of ALLOCATE

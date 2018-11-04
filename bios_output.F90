@@ -9,7 +9,7 @@ MODULE bios_output
     IMPLICIT NONE
 
     INTEGER :: ok   ! netcdf error status
-
+ 
   CONTAINS
 
   SUBROUTINE create_output_file(fileout,ncid_out,varID,tvar,vname,longname,&
@@ -90,13 +90,13 @@ MODULE bios_output
          lat_val(x) = MaskCtrS + MaskRes * ( x - 1 )
       END DO
 
-      PRINT *, "Point 3 lat_val ",lat_val ! Debug
+      !PRINT *, "POINT 3 lat_val ",lat_val ! Debug
 
       DO y = 1, MaskCols
          lon_val(y) = MaskCtrW + MaskRes * ( y - 1 )
       END DO
 
-      PRINT *, "Point 4 lon_val ",lon_val ! Debug
+      !PRINT *, "POINT 4 lon_val ",lon_val ! Debug
 
       ! Write latitude and longitude variables:
       ok = NF90_PUT_VAR(ncid_out, latID, REAL(lat_val, 4))
@@ -117,7 +117,7 @@ MODULE bios_output
     ! each timestep, but may only write to the output file periodically,
     ! depending on whether the user has specified that output should be
     ! aggregated, e.g. to monthly or 6-hourly averages.
-      USE type_def_mod, ONLY: mland, file_name
+      USE type_def_mod, ONLY: mland, file_name,i4b,r_2,sp
       USE bios_io_mod, ONLY: get_unit
       USE cable_bios_met_obs_params, ONLY: MaskCols, MaskRows
 
@@ -150,7 +150,7 @@ MODULE bios_output
       met_2D_temp = -999.
 
       CALL GET_UNIT(iunit)
-      OPEN (iunit, file=TRIM(filename%path_in)//TRIM(filename%swdown_file(1)), &
+      OPEN (iunit, file=TRIM(filename%swdown_file(1)), &
             status="old",action="read")
       READ(iunit,*) mask_value
       CLOSE(iunit)

@@ -5,7 +5,7 @@ MODULE type_def_mod
 ! USAGE:
 ! INCLUDE:
 ! ******************************************************************************
-
+ 
     IMPLICIT NONE
     SAVE ! superfluous
 

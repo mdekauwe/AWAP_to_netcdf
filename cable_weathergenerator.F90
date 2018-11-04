@@ -62,17 +62,17 @@ MODULE CABLE_WEATHERGENERATOR
      REAL(sp),DIMENSION(:),ALLOCATABLE :: &
           PhiSd           ,&  ! downward solar irradiance [W/m2]
           PhiLd           ,&  ! down longwave irradiance  [W/m2]
-          Precip          ,&  ! precip [mm/h]
-          Snow            ,&  ! precip [mm/h]
+          Precip          ,&  ! precip [mm/h]->[mm/s]
+          Snow            ,&  ! precip [mm/h]->[mm/s]
           Wind            ,&  ! wind   [m/s]
-          Temp            ,&  ! temp   [degC]
+          Temp            ,&  ! temp   [degC]->[K]
           VapPPa          ,&  ! vapour pressure [Pa]
           PPa             ,&  ! pressure [Pa]
           QV              ,&  ! Specific Humidity [kg/kg] MMY
           coszen              ! cos(theta)
 
   END TYPE WEATHER_GENERATOR_TYPE
-
+ 
 
 CONTAINS
 
@@ -119,10 +119,10 @@ SUBROUTINE WGEN_INIT( WG, np, latitude, dels )
   ALLOCATE ( WG%VapPPa1500         (np) )  ! 15:00 water vapour pressure [Pa]
   ALLOCATE ( WG%PhiSd              (np) )  ! downward solar irradiance [W/m2]
   ALLOCATE ( WG%PhiLd              (np) )  ! down longwave irradiance  [W/m2]
-  ALLOCATE ( WG%Precip             (np) )  ! precip [mm/h]
-  ALLOCATE ( WG%Snow               (np) )  ! precip [mm/h]
+  ALLOCATE ( WG%Precip             (np) )  ! precip [mm/h]->[mm/s]
+  ALLOCATE ( WG%Snow               (np) )  ! precip [mm/h]->[mm/s]
   ALLOCATE ( WG%Wind               (np) )  ! wind   [m/s]
-  ALLOCATE ( WG%Temp               (np) )  ! temp   [degC]
+  ALLOCATE ( WG%Temp               (np) )  ! temp   [degC]->[K]
   ALLOCATE ( WG%VapPPa             (np) )  ! MMY vapour pressure [Pa] ! vapour pressure [mb] !!!!!!!!!!!!! should change to pa
   ALLOCATE ( WG%PPa                (np) )  ! MMY  pressure [Pa] ! pressure [mb]
   ALLOCATE ( WG%QV                 (np) )  ! MMY  Specific Humidity [kg/kg]
@@ -330,8 +330,8 @@ IF ( ABS(ritime-REAL(INT(ritime))) .GT. 1e-7) THEN
    STOP  "cable_weathergenerator.F90!"
 ENDIF
 IF ((ritime >= 15. .AND. ritime < 16.).OR.(ritime >= 18. .AND. ritime < 19.)) THEN
-   WG%Precip = WG%PrecipDay *1000./2. ! Rainf/GSWP3.BC.Rainf.3hrMap
-   WG%Snow   = WG%SnowDay*1000./2.    ! Snowf/GSWP3.BC.Snowf.3hrMap
+   WG%Precip = WG%PrecipDay*1000./2./3600. ! mm/s, Rainf/GSWP3.BC.Rainf.3hrMap !!!!!!!! Note unit is unuiform!!!!!
+   WG%Snow   = WG%SnowDay*1000./2./3600.   ! mm/s, Snowf/GSWP3.BC.Snowf.3hrMap
 ELSE
    WG%Precip = 0.
    WG%Snow   = 0.
@@ -369,7 +369,7 @@ ELSEWHERE (ritime > WG%TimeSunset )
    ! Sunset to midnight
    WG%Temp = WG%TempSunset + WG%TempNightRate * SQRT(ritime - WG%TimeSunset)
 END WHERE
-
+WG%Temp = WG%Temp + 273.16 ! MMY, unit C->K
 ! -----------------------------------
 ! Water Vapour Pressure, Air Pressure
 ! -----------------------------------
@@ -400,13 +400,13 @@ WG%QV     = WG%VapPPa/WG%PPa*RMWbyRMA ! Qair/GSWP3.BC.Qair.3hrMap, specific humi
 ! Downward longwave irradiance
 ! ----------------------------
 
-PhiLd_Swinbank = 335.97 * (((WG%Temp + 273.16) / 293.0)**6)   ! [W/m2] (Swinbank 1963)
+PhiLd_Swinbank = 335.97 * ((WG%Temp / 293.0)**6)   ! [W/m2] (Swinbank 1963)
 
 ! -------------------------------
 ! Alternate longwave formulation ! LWdown/GSWP3.BC.LWdown.3hrMap
 ! ----------------------------
 
-WG%PhiLd = epsilon * SBoltz * (WG%Temp + 273.16)**4       ! [W/m2] (Brutsaert)
+WG%PhiLd = epsilon * SBoltz * WG%Temp**4       ! [W/m2] (Brutsaert)
 
 WHERE (WG%PhiSd.GT.50.0)
         adjust_fac = ((1.17)**(WG%SolarNorm))/1.17

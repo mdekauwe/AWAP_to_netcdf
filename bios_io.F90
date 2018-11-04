@@ -4,9 +4,9 @@ MODULE bios_io_mod !    MMY
 ! INCLUDE:
 ! ******************************************************************************
 
-    USE ifort ! To use systemqq, the module is needed.
+    USE IFPORT  ! To use systemqq, the module is needed.
     USE type_def_mod, ONLY: i4b, sp, FILE_NAME
-
+ 
   CONTAINS
 
 ! ======================= From MGK and modified by MMY =========================
@@ -26,7 +26,7 @@ MODULE bios_io_mod !    MMY
             WRITE (*, *) 'e.g...             '
             WRITE (*, *) '                   '
             WRITE (*, *) 'Makefile /short/dt6/mm3972/data/AWAP_data &
-                          /short/dt6/mm3972/data/AWAP_to_netcdf'
+                          /short/w35/mm3972/data/AWAP_to_netcdf'
             WRITE (*, *) '                                           '
             STOP
          ELSE
@@ -37,7 +37,7 @@ MODULE bios_io_mod !    MMY
       ELSE
 
          filename%path_in  = "/short/dt6/mm3972/data/AWAP_data"
-         filename%path_out = "/short/dt6/mm3972/data/AWAP_to_netcdf"
+         filename%path_out = "/short/w35/mm3972/data/AWAP_to_netcdf"
 
       END IF
 
@@ -67,34 +67,40 @@ MODULE bios_io_mod !    MMY
 
       IMPLICIT NONE
 
-      INTEGER        :: iunit, ok
-      INTEGER        :: file_num
+      INTEGER        :: iunit, ok, file_num
       CHARACTER(200) :: file_path
       CHARACTER(200),DIMENSION(:),ALLOCATABLE :: file_name
-
+      CHARACTER(500) :: commandline
+  
    ! read file name
-      ok = systemqq('cd '//file_path)
-      ok = systemqq('find . -name "*.flt" | sort -n  >namelist.txt')
+      
+      commandline = 'find '//TRIM(file_path)//' -name "*.flt" -fprintf ./temp.txt "%p\n"'
+      ! output the absolute path of met files
+      print*,commandline
+      ok = systemqq(commandline)
+
+      commandline = 'sort -n <./temp.txt >./namelist.txt'
+      print*,commandline
+      ok = systemqq(commandline)
+
       ! ??? the finding cannot pass to sort command, I dont know why
       ! ??? is it because I used system which uses different environment
       ! ??? but systemqq uses the same environment
 
-      file_num = 0
+      CALL GET_UNIT(iunit)
+      OPEN (iunit, file="filenum.txt",status="old",action="read")
+      READ (iunit, *) file_num
+      CLOSE(iunit)
 
+      ALLOCATE(file_name(file_num))
+      
       CALL GET_UNIT(iunit)
       OPEN (iunit, file="namelist.txt",status="old",action="read")
-      DO WHILE (.NOT. (EOF(iunit)))
-         READ(iunit, *)
-         file_num = file_num + 1
-      END DO
-
-      ALLOCATE ( file_name(file_num) )
-
-      REWIND (iunit)
       READ (iunit, *) file_name
       CLOSE(iunit)
-      PRINT *, 'Point 1 : input filenames ',file_name ! Debug
-      ! Debug ok = systemqq('rm namelist.txt')
+      PRINT *, 'POINT 1 input filenames ',file_name ! Debug
+      ok = systemqq('rm temp.txt')
+      !ok = systemqq('rm namelist.txt')
 
   END SUBROUTINE read_filename
 
