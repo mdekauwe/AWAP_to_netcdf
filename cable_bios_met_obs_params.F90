@@ -1,8 +1,8 @@
 MODULE cable_bios_met_obs_params
 ! ******************************************************************************
-! USAGE: Input routines for BIOS meteorology, remote sensing observations, and
-!        soil parameters for use in the CABLE land surface scheme.
-! INCLUDE:
+! USAGE:
+!
+! INCLUDE: type_def_mod, bios_io_mod, cable_weathergenerator, IFPORT
 ! ******************************************************************************
 
     USE type_def_mod ! MMY
@@ -11,7 +11,7 @@ MODULE cable_bios_met_obs_params
                                    WGEN_DAILY_CONSTANTS, WGEN_SUBDIURNAL_MET
 
     IMPLICIT NONE
- 
+
 ! == From cable_IO_vars_module in cable_iovars.f90, but POINTER -> ALLOCATABLE==
 
     REAL, DIMENSION(:),ALLOCATABLE   :: latitude, longitude  ! Vectors for lat and long of each land cell
@@ -42,11 +42,7 @@ MODULE cable_bios_met_obs_params
 
     REAL(sp), PARAMETER :: SecDay = 86400.
 
-    !TYPE(WEATHER_GENERATOR_TYPE),SAVE :: WG !
-    !TYPE(FILE_NAME),SAVE              :: filename !
-
   CONTAINS
-
 
 ! ============================= cable_bios_init ================================
   SUBROUTINE cable_bios_init(WG, dels, curyear, kend, ktauday, file_path, filename)
@@ -66,7 +62,7 @@ MODULE cable_bios_met_obs_params
       INTEGER(i4b)   :: icol, irow, iland ! Loop counters for cols, rows, land cells
       CHARACTER(200) :: hdr_file          ! hdr_file MMY
       REAL(sp)       :: MaskBndW, MaskBndS  ! Landmask outer bound dimensions in decimal degrees (West & South)
-    
+
       INTEGER        :: file_num
       INTEGER(i4b), ALLOCATABLE :: ColRowGrid(:,:) ! Temp grid to hold col or row numbers for packing to land_x or land_y
 
@@ -75,20 +71,21 @@ MODULE cable_bios_met_obs_params
 ! ___________________________________________________________________________
 
       ! ALLOCATE memory for filename
-     
+
       commandline = 'find '//TRIM(file_path)//' -name "*.flt" -fls ./temp.txt'
-      print*,commandline
-      ok = systemqq(commandline) 
-     
-      commandline = 'wc -l <./temp.txt  >./filenum.txt'
-      print*,commandline
+      PRINT *,TRIM(commandline)
       ok = systemqq(commandline)
+
+      commandline = 'wc -l <./temp.txt  >./filenum.txt'
+      print*,TRIM(commandline)
+      ok = systemqq(commandline)
+      ok = systemqq('rm ./temp.txt')
 
       CALL GET_UNIT(iunit)
       OPEN (iunit, file="filenum.txt",status="old",action="read")
       READ (iunit, *) file_num
       CLOSE(iunit)
-      ok = systemqq('rm ./temp.txt')
+
       PRINT *,"POINT 5 file_num ", file_num
 
       ALLOCATE ( filename%rain_file(file_num)    )
@@ -105,7 +102,7 @@ MODULE cable_bios_met_obs_params
       CALL ReadArcFltHeader( iunit, hdr_file,    &
                              MaskCols, MaskRows, & ! Landmask col and row dimensions
                              MaskBndW, MaskBndS, & ! Landmask outer bound dimensions in decimal degrees (West & South)
-            		     MaskRes, NoDataVal )  ! Landmask resolution (dec deg) and no-data value
+                             MaskRes, NoDataVal )  ! Landmask resolution (dec deg) and no-data value
 
     ! Allocate memory for input data
       mland = MaskCols * MaskRows  ! the amount of land points, defined in type_def_mod
@@ -153,7 +150,9 @@ MODULE cable_bios_met_obs_params
 
     ! Initialise Weather Generator
       CALL WGEN_INIT( WG, mland, latitude, dels )
+
       PRINT *, "POINT 6 finished initialisation"
+
   END SUBROUTINE cable_bios_init
 
 
@@ -178,7 +177,7 @@ MODULE cable_bios_met_obs_params
 
       TYPE(WEATHER_GENERATOR_TYPE) :: WG
       TYPE(FILE_NAME)              :: filename
-      
+
     ! CABLE is calculated in every grid's tile,and landpt(:)%cstart is the position
     ! of 1st gridcell veg patch in main arrays, but in weathergenerator we don't
     ! need to consider the veg patch, and the smallest unit shoulb be grid.
@@ -194,7 +193,7 @@ MODULE cable_bios_met_obs_params
           PRINT *,'POINT 10 counter ',counter
 
 ! ************************** MMY **********************************
-          PRINT *,'POINT 11 TRIM(filename%rain_file(counter))',filename%rain_file(counter)
+          PRINT *,'POINT 11 filename%rain_file(counter)',TRIM(filename%rain_file(counter))
 
           CALL GET_UNIT(rain_unit)  ! Rainfall
           OPEN (rain_unit, FILE=TRIM(filename%rain_file(counter)),        &
@@ -238,7 +237,7 @@ MODULE cable_bios_met_obs_params
           READ (vph15_unit) vph_1500
           CLOSE(vph15_unit)
 
-          
+
           WG%TempMaxDayPrev = WG%TempMaxDay
           WG%VapPPa1500Prev = WG%VapPPa1500
 
@@ -298,7 +297,7 @@ MODULE cable_bios_met_obs_params
           CALL WGEN_DAILY_CONSTANTS( WG, mland, INT(doy)+1 )
 
       END IF !newday
-      
+
       PRINT *, 'POINT 12 finished cable_bios_read_met'
 
 ! follow one file such rain to go through the program and find every procedure needed for tranlating the data

@@ -1,12 +1,12 @@
 MODULE bios_io_mod !    MMY
 ! ******************************************************************************
-! USAGE:
-! INCLUDE:
+! USAGE: Prepare the input files and output files
+! INCLUDE: IFPORT (for using linux command), type_def_mod
 ! ******************************************************************************
 
     USE IFPORT  ! To use systemqq, the module is needed.
     USE type_def_mod, ONLY: i4b, sp, FILE_NAME
- 
+
   CONTAINS
 
 ! ======================= From MGK and modified by MMY =========================
@@ -20,7 +20,7 @@ MODULE bios_io_mod !    MMY
       IF ( IARGC() > 0 ) THEN
 
          CALL GETARG(1, arg)
-         !   ??????????? arg(1:2) ???????????
+         !   ??? arg(1:2)
          IF (arg(1:2) == '-u' .OR. arg(1:2) == '-h') THEN
             WRITE (*, *) '================== USAGE =================='
             WRITE (*, *) 'e.g...             '
@@ -63,44 +63,108 @@ MODULE bios_io_mod !    MMY
   END SUBROUTINE get_unit
 
 ! =================================== MMY ======================================
-  SUBROUTINE read_filename(file_path, file_name)
+  SUBROUTINE read_filename(filename)
 
       IMPLICIT NONE
 
-      INTEGER        :: iunit, ok, file_num
-      CHARACTER(200) :: file_path
-      CHARACTER(200),DIMENSION(:),ALLOCATABLE :: file_name
+      INTEGER        :: iunit, file_num, i, ok
       CHARACTER(500) :: commandline
-  
-   ! read file name
-      
-      commandline = 'find '//TRIM(file_path)//' -name "*.flt" -fprintf ./temp.txt "%p\n"'
-      ! output the absolute path of met files
-      print*,commandline
-      ok = systemqq(commandline)
-
-      commandline = 'sort -n <./temp.txt >./namelist.txt'
-      print*,commandline
-      ok = systemqq(commandline)
-
-      ! ??? the finding cannot pass to sort command, I dont know why
-      ! ??? is it because I used system which uses different environment
-      ! ??? but systemqq uses the same environment
+      TYPE(FILE_NAME):: filename
 
       CALL GET_UNIT(iunit)
       OPEN (iunit, file="filenum.txt",status="old",action="read")
       READ (iunit, *) file_num
       CLOSE(iunit)
+      ok = systemqq('rm ./filenum.txt')
 
-      ALLOCATE(file_name(file_num))
-      
-      CALL GET_UNIT(iunit)
-      OPEN (iunit, file="namelist.txt",status="old",action="read")
-      READ (iunit, *) file_name
+   ! READING MET DATA
+      ! rain
+      commandline = 'find '//TRIM(filename%path_in)//\
+          '/awap_rain_mm_day_2000-2017 -name "*.flt" -fprintf ./temp.txt "%p\n"'
+      ok = systemqq(commandline)
+      commandline = 'sort -n <./temp.txt >./namelist_rain.txt'
+      ok = systemqq(commandline)
+      OPEN (iunit, file="namelist_rain.txt",status="old",action="read")
+      DO i = 1,file_num
+         READ (iunit, '(A)') filename%rain_file(i)
+      END DO
       CLOSE(iunit)
-      PRINT *, 'POINT 1 input filenames ',file_name ! Debug
+
+      ! rad
+      commandline = 'find '//TRIM(filename%path_in)//\
+           '/awap_rad_MJ_day_2000-2017 -name "*.flt" -fprintf ./temp.txt "%p\n"'
+      ok = systemqq(commandline)
+      commandline = 'sort -n <./temp.txt >./namelist_rad.txt'
+      ok = systemqq(commandline)
+      OPEN (iunit, file="namelist_rad.txt",status="old",action="read")
+      DO i = 1,file_num
+         READ (iunit, '(A)') filename%swdown_file(i)
+      END DO
+      CLOSE(iunit)
+
+      ! wind
+      commandline = 'find '//TRIM(filename%path_in)//\
+      '/mcvicar_windspeed_ms_day_2000-2017 -name "*.flt" -fprintf ./temp.txt "%p\n"'
+      ok = systemqq(commandline)
+      commandline = 'sort -n <./temp.txt >./namelist_wind.txt'
+      ok = systemqq(commandline)
+      OPEN (iunit, file="namelist_wind.txt",status="old",action="read")
+      DO i = 1,file_num
+         READ (iunit, '(A)') filename%wind_file(i)
+      END DO
+      CLOSE(iunit)
+
+      ! tmax
+      commandline = 'find '//TRIM(filename%path_in)//\
+           '/awap_tmax_C_day_2000-2017 -name "*.flt" -fprintf ./temp.txt "%p\n"'
+      ok = systemqq(commandline)
+      commandline = 'sort -n <./temp.txt >./namelist_tmax.txt'
+      ok = systemqq(commandline)
+      OPEN (iunit, file="namelist_tmax.txt",status="old",action="read")
+      DO i = 1,file_num
+         READ (iunit, '(A)') filename%tairmax_file(i)
+      END DO
+      CLOSE(iunit)
+
+      ! tmin
+      commandline = 'find '//TRIM(filename%path_in)//\
+           '/awap_tmin_C_day_2000-2017 -name "*.flt" -fprintf ./temp.txt "%p\n"'
+      ok = systemqq(commandline)
+      commandline = 'sort -n <./temp.txt >./namelist_tmin.txt'
+      ok = systemqq(commandline)
+      OPEN (iunit, file="namelist_tmin.txt",status="old",action="read")
+      DO i = 1,file_num
+         READ (iunit, '(A)') filename%tairmin_file(i)
+      END DO
+      CLOSE(iunit)
+
+      ! vph09
+      commandline = 'find '//TRIM(filename%path_in)//\
+        '/awap_vph09_hpa_day_2000-2017 -name "*.flt" -fprintf ./temp.txt "%p\n"'
+      ok = systemqq(commandline)
+      commandline = 'sort -n <./temp.txt >./namelist_vph09.txt'
+      ok = systemqq(commandline)
+      OPEN (iunit, file="namelist_vph09.txt",status="old",action="read")
+      DO i = 1,file_num
+         READ (iunit, '(A)') filename%vph09_file(i)
+      END DO
+      CLOSE(iunit)
+
+      ! vph15
+      commandline = 'find '//TRIM(filename%path_in)//\
+        '/awap_vph15_hpa_day_2000-2017 -name "*.flt" -fprintf ./temp.txt "%p\n"'
+      ok = systemqq(commandline)
+      commandline = 'sort -n <./temp.txt >./namelist_vph15.txt'
+      ok = systemqq(commandline)
+      OPEN (iunit, file="namelist_vph15.txt",status="old",action="read")
+      DO i = 1,file_num
+         READ (iunit, '(A)') filename%vph15_file(i)
+      END DO
+      CLOSE(iunit)
+
       ok = systemqq('rm temp.txt')
-      !ok = systemqq('rm namelist.txt')
+
+      PRINT *, 'POINT 1 input filenames, e.g. ', TRIM(filename%rain_file(file_num)) ! Debug
 
   END SUBROUTINE read_filename
 
@@ -121,6 +185,7 @@ MODULE bios_io_mod !    MMY
       REAL(sp), INTENT(OUT)      :: xLL, yLL, CellSize, NoDataVal
       CHARACTER(200), INTENT(IN) :: Headfile
       CHARACTER(12)              :: Head
+
 !-------------------------------------------------------------------------------
       OPEN (unit = iunit, file = Headfile, status = 'old')
 
@@ -133,7 +198,7 @@ MODULE bios_io_mod !    MMY
 
       CLOSE (unit=iunit)
       ! Debug
-      PRINT *,"Point 2 Headfile:",Headfile,Cols,Rows,xLL,yLL,CellSize,NoDataVal
+      PRINT *,"POINT 2 Headfile:",Headfile,Cols,Rows,xLL,yLL,CellSize,NoDataVal
 
   END SUBROUTINE ReadArcFltHeader
 

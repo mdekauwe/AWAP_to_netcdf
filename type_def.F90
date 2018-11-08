@@ -1,16 +1,13 @@
-! ***************************** MMY ***********************************
-! ALL TYPE USED IN AWAP TO NETCDF
 MODULE type_def_mod
 ! ******************************************************************************
-! USAGE:
-! INCLUDE:
+! USAGE: Type used in AWAP_TO_NETCDF
+! INCLUDE: NONE
 ! ******************************************************************************
- 
+
     IMPLICIT NONE
     SAVE ! superfluous
 
 ! =============== From ./offline/cable_bios_met_obs_params.F90 =================
-
     ! Define integer kind parameters to accommodate the range of numbers usually
     ! associated with 4, 2, and 1 byte integers.
     INTEGER, PARAMETER :: i4b = selected_int_kind(9)

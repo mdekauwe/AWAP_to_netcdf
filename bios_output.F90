@@ -117,6 +117,7 @@ MODULE bios_output
     ! each timestep, but may only write to the output file periodically,
     ! depending on whether the user has specified that output should be
     ! aggregated, e.g. to monthly or 6-hourly averages.
+      
       USE type_def_mod, ONLY: mland, file_name,i4b,r_2,sp
       USE bios_io_mod, ONLY: get_unit
       USE cable_bios_met_obs_params, ONLY: MaskCols, MaskRows
@@ -140,20 +141,23 @@ MODULE bios_output
       TYPE(FILE_NAME)     :: filename
 
 
-      ALLOCATE(met_1D(mland)                  )
+      ! ALLOCATE(met_1D(mland)                  )
       ALLOCATE(met_2D(MaskRows, MaskCols)     )
+      ALLOCATE(met_2D_temp(MaskCols, MaskRows))
       ALLOCATE(mask_2D(MaskCols, MaskRows)    )
       ALLOCATE(mask_value(MaskRows, MaskCols) )
-      ALLOCATE(met_2D_temp(MaskCols, MaskRows))
-
+      
+      PRINT *,"POINT 13 ALLOCATE"
 
       met_2D_temp = -999.
 
       CALL GET_UNIT(iunit)
-      OPEN (iunit, file=TRIM(filename%swdown_file(1)), &
-            status="old",action="read")
-      READ(iunit,*) mask_value
-      CLOSE(iunit)
+      OPEN (iunit, file=TRIM(filename%swdown_file(1)), FORM='BINARY', &
+           status="old",action="read")
+      READ(iunit) mask_value
+      CLOSE(iunit) 
+
+      PRINT *,"POINT 14 SWDOWN mask_value"
 
       IF (ocnmask) THEN
          WHERE ( mask_value == -999.)
@@ -166,6 +170,7 @@ MODULE bios_output
       END IF
 
       met_2D_temp  = UNPACK(met_1D, mask_2D, met_2D_temp)
+      
       ! Debug: need to check the map of default value distribution
 
 
@@ -173,16 +178,19 @@ MODULE bios_output
       DO rows = 1, MaskRows
          met_2D(rows,:) = met_2D_temp(:, MaskRows + 1 - rows)
          ! TRICK, FORTRAN processes in a column priority way
-      END do
-
+      END DO
+       
+      PRINT *,"met_1D", met_1D
 
       !!!!!!!! WIND & RADIATION OVER OCEAN ARE DEFAULT value
       ! check whether the longwave and other var are default over ocean
 
-      DEALLOCATE(met_1D     )
+      ! DEALLOCATE(met_1D     )
       DEALLOCATE(mask_2D    )
       DEALLOCATE(mask_value )
       DEALLOCATE(met_2D_temp)
+      
+      PRINT *,"POINT 15 DEALLOCATE"
 
       delh = dels/3600.
     ! Write to temporary time variable:
@@ -202,7 +210,7 @@ MODULE bios_output
     ! From write_output_variable_r1 in cable_write.F90
       ok = NF90_PUT_VAR(ncid_out, varID, REAL(met_2D, 4),start = (/ktau,1,1/),&
            count = (/1, MaskRows, MaskCols/)) ! write data to file
-
+     ! PRINT *,"POINT 15.5 met_2D",met_2D
       DEALLOCATE( met_2D )
 
 
