@@ -77,8 +77,6 @@ PROGRAM awap_to_netcdf
 
     counter = 0
 
-    PRINT *, "POINT 7 filename%rain_file", TRIM(filename%rain_file(1))
-
 ! *************************** 2. Loop over years *******************************
     DO YYYY = YearStart, YearEnd ! YYYY= CABLE_USER%YearStart,  CABLE_USER%YearEnd
        CurYear = YYYY
@@ -89,22 +87,23 @@ PROGRAM awap_to_netcdf
 	        LOY = 365
        ENDIF
 
-       PRINT *,"POINT 8 CurYear, LOY ", CurYear, LOY ! Debug
-
        kend = NINT(24.0*3600.0/dels) * LOY ! rounds its argument to the nearest whole number.
                                            ! kend is the total timesteps of the current year
+
+       PRINT *,"POINT 8 CurYear, LOY, kend ", CurYear, LOY, kend ! Debug
+
 
        WRITE(CurYear_CHAR,'(I4)'), CurYear ! It is "(I4)" rather than "(A4)"
        ! PRINT *,"POINT 8.5 CurYear_CHAR ",CurYear_CHAR ! Debug
 
-       Rainf_name   = TRIM(filename%path_out)//"Rainf/AWAP.Rainf.3hr."//TRIM(CurYear_CHAR)//".nc"
-       Snow_name    = TRIM(filename%path_out)//"Snowf/AWAP.Snowf.3hr."//TRIM(CurYear_CHAR)//".nc"
-       LWdown_name  = TRIM(filename%path_out)//"LWdown/AWAP.LWdown.3hr."//TRIM(CurYear_CHAR)//".nc"
-       SWdown_name  = TRIM(filename%path_out)//"SWdown/AWAP.SWdown.3hr."//TRIM(CurYear_CHAR)//".nc"
-       Tair_name    = TRIM(filename%path_out)//"Tair/AWAP.Tair.3hr."//TRIM(CurYear_CHAR)//".nc"
-       Wind_name    = TRIM(filename%path_out)//"Wind/AWAP.Wind.3hr."//TRIM(CurYear_CHAR)//".nc"
-       Qair_name    = TRIM(filename%path_out)//"Qair/AWAP.Qair.3hr."//TRIM(CurYear_CHAR)//".nc"
-       PSurf_name   = TRIM(filename%path_out)//"PSurf/AWAP.PSurf.3hr."//TRIM(CurYear_CHAR)//".nc"
+       Rainf_name   = TRIM(filename%path_out)//"/Rainf/AWAP.Rainf.3hr."//TRIM(CurYear_CHAR)//".nc"
+       Snow_name    = TRIM(filename%path_out)//"/Snowf/AWAP.Snowf.3hr."//TRIM(CurYear_CHAR)//".nc"
+       LWdown_name  = TRIM(filename%path_out)//"/LWdown/AWAP.LWdown.3hr."//TRIM(CurYear_CHAR)//".nc"
+       SWdown_name  = TRIM(filename%path_out)//"/SWdown/AWAP.SWdown.3hr."//TRIM(CurYear_CHAR)//".nc"
+       Tair_name    = TRIM(filename%path_out)//"/Tair/AWAP.Tair.3hr."//TRIM(CurYear_CHAR)//".nc"
+       Wind_name    = TRIM(filename%path_out)//"/Wind/AWAP.Wind.3hr."//TRIM(CurYear_CHAR)//".nc"
+       Qair_name    = TRIM(filename%path_out)//"/Qair/AWAP.Qair.3hr."//TRIM(CurYear_CHAR)//".nc"
+       PSurf_name   = TRIM(filename%path_out)//"/PSurf/AWAP.PSurf.3hr."//TRIM(CurYear_CHAR)//".nc"
 
        PRINT *,"POINT 9 Rainf_name ", TRIM(Rainf_name) ! Debug
 
@@ -150,6 +149,8 @@ PROGRAM awap_to_netcdf
 
        DO ktau = kstart, kend
 
+          PRINT *,"POINT 11 ktau ", ktau ! Debug
+
           CALL cable_bios_read_met( WG, filename, counter, CurYear, YearStart, &
                                     YearEnd, ktau, kend, dels )
              ! INCLUDING:
@@ -183,7 +184,7 @@ PROGRAM awap_to_netcdf
           !CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
           !                  .FALSE., ncid_ps  , psID  , pstID  )
           DEALLOCATE(data_temp)
-          PRINT*,"POINT 16 Finish output ", CurYear, "-", ktau
+          PRINT*,"POINT 17 Finish output ", CurYear, "-", ktau
        END DO ! END Do loop over timestep ktau
 
        ok = NF90_CLOSE(ncid_rain)
@@ -194,10 +195,10 @@ PROGRAM awap_to_netcdf
        !ok = NF90_CLOSE(ncid_wind)
        !ok = NF90_CLOSE(ncid_qair)
        !ok = NF90_CLOSE(ncid_ps  )
-       PRINT*,"POINT 17 Finish translating the year of ", CurYear
+       PRINT*,"POINT 18 Finish translating the year of ", CurYear
 
     END DO !YEAR
-    PRINT *,"POINT 18 Done (*^_^*) "
+    PRINT *,"POINT 19 Done (*^_^*) "
 END PROGRAM awap_to_netcdf
 
 !--------------------------------------------------------------------------!
