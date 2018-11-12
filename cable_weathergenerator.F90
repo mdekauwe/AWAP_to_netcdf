@@ -130,6 +130,8 @@ CONTAINS
 
       WG%LatDeg(:) = latitude(:)
 
+      PRINT *, "POINT 6 finishing weathergenerator initialisation"
+
   END SUBROUTINE WGEN_INIT
 
 
@@ -419,6 +421,8 @@ CONTAINS
       IF (ANY((WG%PhiLd.GT.750.00).OR.(WG%PhiLd.LT.100.00))) THEN
           write(*,*) 'PhiLD out of range'
       ENDIF
+
+      PRINT *, 'POINT 16 finished WGEN_SUBDIURNAL_MET'
 
   END SUBROUTINE WGEN_SUBDIURNAL_MET
 

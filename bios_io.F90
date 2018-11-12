@@ -14,8 +14,11 @@ MODULE bios_io_mod !    MMY
 
       IMPLICIT NONE
 
+      INTEGER              :: ok
+      CHARACTER(500)       :: commandline
       CHARACTER(LEN = 200) :: arg
       TYPE(FILE_NAME)      :: filename
+
 
       IF ( IARGC() > 0 ) THEN
 
@@ -25,7 +28,7 @@ MODULE bios_io_mod !    MMY
             WRITE (*, *) '================== USAGE =================='
             WRITE (*, *) 'e.g...             '
             WRITE (*, *) '                   '
-            WRITE (*, *) 'Makefile /short/dt6/mm3972/data/AWAP_data &
+            WRITE (*, *) 'Makefile /short/w35/mm3972/data/AWAP_data &
                           /short/w35/mm3972/data/AWAP_to_netcdf'
             WRITE (*, *) '                                           '
             STOP
@@ -36,10 +39,37 @@ MODULE bios_io_mod !    MMY
 
       ELSE
 
-         filename%path_in  = "/short/dt6/mm3972/data/AWAP_data"
+         filename%path_in  = "/short/w35/mm3972/data/AWAP_data"
          filename%path_out = "/short/w35/mm3972/data/AWAP_to_netcdf"
 
       END IF
+
+      ! create output data file folders
+      commandline = 'mkdir '//TRIM(filename%path_out)//'/Rainf'
+      ok = systemqq(commandline)
+
+      commandline = 'mkdir '//TRIM(filename%path_out)//'/Snowf'
+      ok = systemqq(commandline)
+
+      commandline = 'mkdir '//TRIM(filename%path_out)//'/LWdown'
+      ok = systemqq(commandline)
+
+      commandline = 'mkdir '//TRIM(filename%path_out)//'/SWdown'
+      ok = systemqq(commandline)
+
+      commandline = 'mkdir '//TRIM(filename%path_out)//'/Tair'
+      ok = systemqq(commandline)
+
+      commandline = 'mkdir '//TRIM(filename%path_out)//'/Wind'
+      ok = systemqq(commandline)
+
+      commandline = 'mkdir '//TRIM(filename%path_out)//'/Qair'
+      ok = systemqq(commandline)
+
+      commandline = 'mkdir '//TRIM(filename%path_out)//'/PSurf'
+      ok = systemqq(commandline)
+
+      PRINT *,"POINT 1 Reading input and output paths"
 
   END SUBROUTINE inout_path
 
@@ -164,7 +194,7 @@ MODULE bios_io_mod !    MMY
 
       ok = systemqq('rm temp.txt')
 
-      PRINT *, 'POINT 1 input filenames, e.g. ', TRIM(filename%rain_file(file_num)) ! Debug
+      PRINT *, 'POINT 7 input filenames, e.g. ', TRIM(filename%rain_file(file_num)) ! Debug
 
   END SUBROUTINE read_filename
 
@@ -198,7 +228,10 @@ MODULE bios_io_mod !    MMY
 
       CLOSE (unit=iunit)
       ! Debug
-      PRINT *,"POINT 2 Headfile:",Headfile,Cols,Rows,xLL,yLL,CellSize,NoDataVal
+      PRINT *,"POINT 3 Headfile:  ",Headfile
+      PRINT *,"MaskCols, MaskRows ",Cols,Rows
+      PRINT *,"MaskBndW, MaskBndS ",xLL,yLL
+      PRINT *,"CellSize,NoDataVal ",CellSize,NoDataVal
 
   END SUBROUTINE ReadArcFltHeader
 

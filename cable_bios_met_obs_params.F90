@@ -14,8 +14,7 @@ MODULE cable_bios_met_obs_params
 
 ! == From cable_IO_vars_module in cable_iovars.f90, but POINTER -> ALLOCATABLE==
 
-    REAL, DIMENSION(:),ALLOCATABLE   :: latitude, longitude  ! Vectors for lat and long of each land cell
-    INTEGER, DIMENSION(:),ALLOCATABLE:: land_x,land_y        ! indicies of land in mask
+    REAL, DIMENSION(:),ALLOCATABLE   :: latitude !, longitude  ! Vectors for lat and long of each land cell
 
     INTEGER(i4b) :: MaskCols, MaskRows  ! Landmask col and row dimensions
     REAL(sp)     :: MaskCtrW, MaskCtrS
@@ -59,12 +58,13 @@ MODULE cable_bios_met_obs_params
       CHARACTER(500)         :: commandline
 
       INTEGER(i4b)   :: iunit, ok
-      INTEGER(i4b)   :: icol, irow, iland ! Loop counters for cols, rows, land cells
+      INTEGER(i4b)   :: irow, iland !icol ! Loop counters for cols, rows, land cells
       CHARACTER(200) :: hdr_file          ! hdr_file MMY
       REAL(sp)       :: MaskBndW, MaskBndS  ! Landmask outer bound dimensions in decimal degrees (West & South)
-
       INTEGER        :: file_num
-      INTEGER(i4b), ALLOCATABLE :: ColRowGrid(:,:) ! Temp grid to hold col or row numbers for packing to land_x or land_y
+
+      INTEGER, DIMENSION(:),ALLOCATABLE :: land_y  !land_x ! indicies of land in mask
+      INTEGER(i4b), ALLOCATABLE         :: ColRowGrid(:,:) ! Temp grid to hold col or row numbers for packing to land_x or land_y
 
       TYPE(WEATHER_GENERATOR_TYPE) :: WG !,SAVE
       TYPE(FILE_NAME)              :: filename !,SAVE
@@ -86,7 +86,7 @@ MODULE cable_bios_met_obs_params
       READ (iunit, *) file_num
       CLOSE(iunit)
 
-      PRINT *,"POINT 5 file_num ", file_num
+      PRINT *,"POINT 2 the number of met files ", file_num
 
       ALLOCATE ( filename%rain_file(file_num)    )
       ALLOCATE ( filename%swdown_file(file_num)  )
@@ -106,33 +106,36 @@ MODULE cable_bios_met_obs_params
 
     ! Allocate memory for input data
       mland = MaskCols * MaskRows  ! the amount of land points, defined in type_def_mod
+      PRINT *,"POINT 4 mland ", mland
 
-      ALLOCATE( latitude(mland), longitude(mland) )
-      ALLOCATE( land_y  (mland), land_x   (mland) )
-      ALLOCATE( ColRowGrid(MaskCols,MaskRows)     )
+      ALLOCATE( land_y (mland) ) !, land_x   (mland)
+      ALLOCATE( ColRowGrid(MaskCols,MaskRows) )
 
     ! Populate a temporary integer grid with column numbers, then row numbers,
     ! packing them with the landmask into the cable vectors that record the
     ! column and row numbers of the land cells.
 
-      FORALL (icol = 1:MaskCols) ColRowGrid(icol,:) = icol
-      land_x = PACK(ColRowGrid,.true.)
+      !FORALL (icol = 1:MaskCols) ColRowGrid(icol,:) = icol
+      !land_x = PACK(ColRowGrid,.true.)
       FORALL (irow = 1:MaskRows) ColRowGrid(:,irow) = irow
       land_y = PACK(ColRowGrid,.true.)
+      DEALLOCATE (ColRowGrid)
 
     ! translate cols and rows of land_x and land_y into corresponding lats and longs.
       MaskCtrW = MaskBndW + (MaskRes / 2.0) ! Convert western and southern
       MaskCtrS = MaskBndS + (MaskRes / 2.0) ! boundaries to cell centres.
+
+      ALLOCATE( latitude(mland) ) !, longitude(mland)
       DO iLand = 1,mland
-         longitude(iLand) = MaskRes * real((land_x(iLand) - 1)) + MaskCtrW
+         !longitude(iLand) = MaskRes * real((land_x(iLand) - 1)) + MaskCtrW
          latitude(iLand)  = MaskCtrS + (real(MaskRows - land_y(iLand)) * MaskRes)
       END DO
     ! Note that: the point(0,0) is the the westnorthest point on map, and
     !            the point(MaskRows-lat,MaskCols-lon) is the eastsouthest point.
-
-      DEALLOCATE (ColRowGrid)
-      DEALLOCATE (land_x)
+      !DEALLOCATE (land_x)
       DEALLOCATE (land_y)
+
+      PRINT *,"POINT 5 calculating latitude"
 
     ! call1 is unnecesery because cable_bios_init is only called once
 
@@ -150,8 +153,6 @@ MODULE cable_bios_met_obs_params
 
     ! Initialise Weather Generator
       CALL WGEN_INIT( WG, mland, latitude, dels )
-
-      PRINT *, "POINT 6 finished initialisation"
 
   END SUBROUTINE cable_bios_init
 
@@ -186,14 +187,16 @@ MODULE cable_bios_met_obs_params
       doy  = INT(REAL(ktau-1) * dels / SecDay ) + 1
       year = CurYear
 
+      PRINT *,'POINT 12 hod, doy, year', hod, doy, year
+
       newday = ( hod == 0 )
 
       IF ( newday ) THEN
           counter = counter + 1
-          PRINT *,'POINT 10 counter ',counter
+          PRINT *,'POINT 13 counter ',counter
 
 ! ************************** MMY **********************************
-          PRINT *,'POINT 11 filename%rain_file(counter)',TRIM(filename%rain_file(counter))
+          PRINT *,'POINT 14 name of rain file',TRIM(filename%rain_file(counter))
 
           CALL GET_UNIT(rain_unit)  ! Rainfall
           OPEN (rain_unit, FILE=TRIM(filename%rain_file(counter)),        &
@@ -298,7 +301,7 @@ MODULE cable_bios_met_obs_params
 
       END IF !newday
 
-      PRINT *, 'POINT 12 finished cable_bios_read_met'
+      PRINT *, 'POINT 15 finished cable_bios_read_met'
 
 ! follow one file such rain to go through the program and find every procedure needed for tranlating the data
 ! and can chance the data format by using array instead of ALLOCATE
