@@ -14,27 +14,32 @@ MODULE bios_output
 
   CONTAINS
 
-  SUBROUTINE create_output_file(fileout, vname, longname, standardname, almaname, vunits)
+  SUBROUTINE create_output_file(fileout,ncid_out,varID,tvar,vname,longname,&
+                                standardname, almaname, vunits)
     ! Creates netcdf output file, defines variables
-
+      USE type_def_mod, ONLY: mland, file_name,i4b,r_2,sp !!!!!!
       USE cable_bios_met_obs_params, ONLY: MaskCols, MaskRows, &
                                            MaskCtrW, MaskCtrS, &
                                            MaskRes, NoDataVal
       IMPLICIT NONE
 
       CHARACTER(LEN=200),INTENT(IN):: fileout
+
+      INTEGER, INTENT(OUT) :: ncid_out ! output data netcdf file ID
+      INTEGER, INTENT(OUT) :: varID, tvar ! var,time ID
+
       CHARACTER(LEN=*), INTENT(IN) :: vname ! name of variable
       CHARACTER(LEN=*), INTENT(IN) :: longname ! full variable name
       CHARACTER(LEN=*), INTENT(IN) :: standardname ! standard variable name
       CHARACTER(LEN=*), INTENT(IN) :: almaname !alma variable name
       CHARACTER(LEN=*), INTENT(IN) :: vunits ! variable units
 
-      INTEGER :: ncid_out ! output data netcdf file ID
-      INTEGER :: varID, tvar ! var,time ID
       INTEGER :: latID, lonID  ! lat, lon ID
       INTEGER :: tID, xID, yID ! dimension ID
       INTEGER :: x, y
       REAL,ALLOCATABLE :: lat_val(:),lon_val(:)
+
+      REAL(r_2), DIMENSION(1) :: timetemp!!!!!!!
 
     ! Create output file:
       ok = NF90_CREATE(TRIM(fileout), NF90_CLOBBER, ncid_out)
@@ -42,6 +47,7 @@ MODULE bios_output
 
     ! Put the file in define mode:
       ok = NF90_REDEF(ncid_out)
+      ! IF(ok /= NF90_NOERR)  PRINT *, 'Error defining output file'
 
     ! Define dimensions:
       ok = NF90_DEF_DIM(ncid_out, 'time', NF90_UNLIMITED, tID)
@@ -101,9 +107,13 @@ MODULE bios_output
          lat_val(x) = MaskCtrS + MaskRes * ( x - 1 )
       END DO
 
+      !PRINT *, "POINT 3 lat_val ",lat_val ! Debug
+
       DO y = 1, MaskCols
          lon_val(y) = MaskCtrW + MaskRes * ( y - 1 )
       END DO
+
+      !PRINT *, "POINT 4 lon_val ",lon_val ! Debug
 
       ! Write latitude and longitude variables:
       ok = NF90_PUT_VAR(ncid_out, latID, REAL(lat_val, 4))
@@ -112,10 +122,14 @@ MODULE bios_output
       ok = NF90_PUT_VAR(ncid_out, lonID, REAL(lon_val, 4))
       IF(ok /= NF90_NOERR)  PRINT *, 'Error writing lon'
 
+      timetemp = DBLE((INT((1992 - 1991)/4.)*(366+365*3) &
+                 + MOD((1992 - 1991),4)*365)*24.         &
+                 + (289-1)*3)
+
+      ok = NF90_PUT_VAR(ncid_out, tvar, timetemp, start = (/1/), count = (/1/))
+      IF(ok /= NF90_NOERR)  PRINT *, '!!! Try Error writing time'
       DEALLOCATE (lat_val)
       DEALLOCATE (lon_val)
-
-      ok = NF90_CLOSE(ncid_out)
 
       PRINT *,"POINT 10 created output file ", TRIM(fileout)
 
@@ -124,9 +138,8 @@ MODULE bios_output
 
 
 ! ==================================== MMY =====================================
-  SUBROUTINE write_output(filename, fileout, vname, met_1D, dels, CurYear, &
-                          ktau, kend, ocnmask )
-
+  SUBROUTINE write_output(filename, met_1D, dels, CurYear, ktau, kend, ocnmask,&
+                          ncid_out, varID, tvar)
     ! Writes model output variables and, if requested, calls
     ! energy and mass balance routines. This subroutine is called
     ! each timestep, but may only write to the output file periodically,
@@ -139,16 +152,14 @@ MODULE bios_output
 
       IMPLICIT NONE
 
-      CHARACTER(LEN=*), INTENT(IN) :: fileout
-      CHARACTER(LEN=*), INTENT(IN) :: vname
-      REAL, INTENT(IN)             :: dels
-      INTEGER, INTENT(IN)          :: CurYear, ktau, kend ! timestep number in loop which include spinup
-      LOGICAL, INTENT(IN)          :: ocnmask ! whether it is default value over ocean
+      REAL, INTENT(IN)    :: dels
+      INTEGER, INTENT(IN) :: CurYear, ktau, kend ! timestep number in loop which include spinup
+      LOGICAL, INTENT(IN) :: ocnmask ! whether it is default value over ocean
+      INTEGER, INTENT(IN) :: ncid_out, varID, tvar
 
-      INTEGER                 :: ncid, varID, tvar
-      REAL                    :: delh ! time step size in hour
-      INTEGER                 :: rows
-      INTEGER(i4b)            :: iunit
+      REAL                :: delh ! time step size in hour
+      INTEGER             :: rows
+      INTEGER(i4b)        :: iunit
       REAL(r_2), DIMENSION(1) :: timetemp ! temporary variable for storing time
 
       REAL(sp),DIMENSION(:),ALLOCATABLE   :: met_1D
@@ -159,18 +170,20 @@ MODULE bios_output
 
       ALLOCATE(met_2D_temp(MaskCols, MaskRows))
       ALLOCATE(mask_2D(MaskCols, MaskRows)    )
-
-      met_2D_temp = -999.
+  
+      PRINT *, "POINT-B ncid_out, varID, tvar", ncid_out, varID, tvar
+    
+      met_2D_temp = -999.     
       mask_2D = .TRUE.
 
       met_2D_temp  = UNPACK(met_1D, mask_2D, met_2D_temp)
       ! Debug: need to check the map of default value distribution
-
+     
       DEALLOCATE(mask_2D    )
       PRINT *,"It is OK"
-
+      
       ALLOCATE(met_2D(MaskCols, MaskRows)     )
-
+   
       ! reverse lat
       DO rows = 1, MaskRows
          met_2D(:,rows) = met_2D_temp(:, MaskRows + 1 - rows)
@@ -178,7 +191,7 @@ MODULE bios_output
       END DO
       ! WIND & RADIATION OVER OCEAN ARE DEFAULT value
       PRINT *,"It is OK 2"
-
+      
       ALLOCATE(mask_value(MaskRows, MaskCols) )
 
       CALL GET_UNIT(iunit)
@@ -194,7 +207,7 @@ MODULE bios_output
       END DO
       DEALLOCATE(mask_value )
       PRINT *,"It is OK 4"
-
+     
       !!!!!!!!!!!!!!!!!!!!
       !IF (ocnmask) THEN
       !   WHERE ( met_2D_temp == -999.)
@@ -217,35 +230,20 @@ MODULE bios_output
          PRINT *, "ERROR: CurYear should be larger than 1990"
       END IF
 
-
-      ok = NF90_OPEN( TRIM(fileout), NF90_WRITE, ncid = ncid)!, 5000000)
-      IF(ok /= NF90_NOERR)  PRINT *, 'Error opening ',TRIM(fileout)
-
-      ok = NF90_INQ_VARID(ncid, TRIM(vname), varID)
-      IF(ok /= NF90_NOERR)  PRINT *, 'Error getting ID of',TRIM(vname)
-
-      ok = NF90_INQ_VARID(ncid, 'time', tvar)
-      IF(ok /= NF90_NOERR)  PRINT *, 'Error getting ID of time'
-
-      PRINT *, "POINT-B ncid, varID, tvar", ncid, varID, tvar
-
     ! Write time variable for this output time step:
-      ok = NF90_PUT_VAR(ncid, tvar, timetemp, start = (/ktau/), count = (/1/))
+      ok = NF90_PUT_VAR(ncid_out, tvar, timetemp, start = (/ktau/), count = (/1/))
       IF(ok /= NF90_NOERR)  PRINT *, 'Error writing time ',TRIM(nf90_strerror(ok))
     ! timetemp shouldn't accumulate
       PRINT *,"timetemp", timetemp
-
     ! From write_output_variable_r1 in cable_write.F90
-      ok = NF90_PUT_VAR(ncid, varID, REAL(met_2D, 4), start = (/1,1,ktau/),&
+      ok = NF90_PUT_VAR(ncid_out, varID, REAL(met_2D, 4), start = (/1,1,ktau/),&
            count = (/MaskCols, MaskRows, 1/)) ! write data to file
       IF(ok /= NF90_NOERR)  PRINT *, 'Error writing var ', TRIM(nf90_strerror(ok))
-
+     
       PRINT *,"met_2D(400,300) ",met_2D(400,300)
 
       DEALLOCATE( met_2D )
 
-      ok = NF90_CLOSE(ncid)
-      IF(ok /= NF90_NOERR)  PRINT *, 'Error closing nc file', TRIM(nf90_strerror(ok))
 
   END SUBROUTINE write_output
 
