@@ -1,14 +1,6 @@
-# Find all source files, create a list of corresponding object files
-SRCS=$(wildcard *.f90)
-OBJS=$(patsubst %.f90, %.o, $(SRCS))
-
-# Ditto for mods
-# MODS=$(wildcard mod*.f90)
-# MOD_OBJS=$(patsubst %.f90, %.o, $(MODS))
-
 # Compiler/Linker settings
 FC = ifort #gfortran
-FCFLAGS = -g -c -Wall -Wno-tabs
+FCFLAGS = -g -c #-Wall -Wno-tabs
 
 NCDIR='/opt/local/lib/'
 NCMOD='/opt/local/include/'
