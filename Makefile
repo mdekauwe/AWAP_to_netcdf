@@ -7,8 +7,7 @@ OBJS=$(patsubst %.f90, %.o, $(SRCS))
 # MOD_OBJS=$(patsubst %.f90, %.o, $(MODS))
 
 # Compiler/Linker settings
-FC = gfortran
-FLFLAGS = -g
+FC = ifort #gfortran
 FCFLAGS = -g -c -Wall -Wno-tabs
 
 NCDIR='/opt/local/lib/'
@@ -33,7 +32,7 @@ CINC = -I$(NCMOD)
 
 #default rules for these suffixes
 .F90.o:
-	$(FC) $(CFLAGS) $(CINC) -c $<
+	$(FC) $(FCFLAGS) $(CINC) -c $<
 
 
 # default target by convention is ``all''
@@ -42,7 +41,7 @@ all : $(PROG)
 #build PROG (cable executable) by linking all objects
 #$(PROG) : $(OBJS)
 $(PROG) : awap_to_netcdf.o
-	$(FC) $(LDFLAGS) -o $@ $(OBJS) $(LD) 
+	$(FC) $(LDFLAGS) -o $@ $(OBJS) $(LD)
 
 
 # dependencies
