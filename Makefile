@@ -36,7 +36,7 @@ all : $(PROG)
 #build PROG (cable executable) by linking all objects
 #$(PROG) : $(OBJS)
 $(PROG) : awap_to_netcdf.o
-	$(FC) $(LDFLAGS) -o $@ $(OBJS) $(LD)
+	$(FC) $(LDFLAGS) $(NCDIR) -o $@ $(OBJS) $(LD)
 
 
 # dependencies
