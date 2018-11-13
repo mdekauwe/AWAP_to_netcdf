@@ -25,9 +25,7 @@ PROGRAM awap_to_netcdf
     CHARACTER(4):: CurYear_CHAR
 
     REAL(sp),DIMENSION(:),ALLOCATABLE :: data_temp
-    INTEGER(i4b)                      :: iunit, iunit_rain, iunit_snow, iunit_lwdown, &
-                                         iunit_swdown, iunit_tair, iunit_wind,        &
-                                         iunit_qair, iunit_psurf
+    INTEGER(i4b)                      :: iunit
 
 
     ! input rain file path
@@ -37,18 +35,6 @@ PROGRAM awap_to_netcdf
     CHARACTER(LEN = 200)   :: Rainf_name, Snow_name, LWdown_name, &
                               SWdown_name, Tair_name, Wind_name,  &
                               Qair_name, PSurf_name
-
-    ! output data netcdf file ID
-    INTEGER                :: ncid_rain, ncid_snow, ncid_lw, ncid_sw,&
-                              ncid_tair, ncid_wind, ncid_qair, ncid_ps
-
-    ! output variable ID
-    INTEGER                :: rainID, snowID, lwID, swID, &
-                              tairID, windID, qairID, psID
-
-    ! time variable ID for output nc file
-    INTEGER                :: raintID, snowtID, lwtID, swtID, &
-                              tairtID, windtID, qairtID, pstID
 
     TYPE(WEATHER_GENERATOR_TYPE),SAVE :: WG
     TYPE(FILE_NAME),SAVE              :: filename
@@ -109,70 +95,45 @@ PROGRAM awap_to_netcdf
 
        PRINT *,"POINT 9 Rainf_name ", TRIM(Rainf_name) ! Debug
 
-!       CALL create_output_file(Rainf_name, ncid_rain, rainID, raintID, "Rainf",&
-!                              "Rainfall rate",                         &
-!                              "rainfall_flux",                         &
-!                              "Rainf", "kg m-2 s-1")
+       CALL create_output_file(Rainf_name, "Rainf",                    &
+                              "Rainfall rate",                         &
+                              "rainfall_flux",                         &
+                              "Rainf", "kg m-2 s-1")
 
-!       CALL create_output_file(Snow_name, ncid_snow, snowID, snowtID, "Snowf", &
-!                              "Snowfall rate",                         &
-!                              "snowfall_flux",                         &
-!                              "Snowf","kg m-2 s-1")
+       CALL create_output_file(Snow_name, "Snowf",                     &
+                              "Snowfall rate",                         &
+                              "snowfall_flux",                         &
+                              "Snowf","kg m-2 s-1")
 
-!       CALL create_output_file(LWdown_name, ncid_lw, lwID, lwtID, "LWdown",    &
-!                               "Downward Longwave Radiation",          &
-!                               "surface_downwelling_longwave_flux_in_air", &
-!                               "LWdown","W m-2")
+       CALL create_output_file(LWdown_name, "LWdown",                  &
+                               "Downward Longwave Radiation",          &
+                               "surface_downwelling_longwave_flux_in_air", &
+                               "LWdown","W m-2")
 
-!       CALL create_output_file(SWdown_name, ncid_sw, swID, swtID, "SWdown",    &
-!                              "Downward Shortwave Radiation",          &
-!                              "surface_downwelling_shortwave_flux_in_air", &
-!                              "SWdown", "W m-2")
+       CALL create_output_file(SWdown_name, "SWdown",                  &
+                              "Downward Shortwave Radiation",          &
+                              "surface_downwelling_shortwave_flux_in_air", &
+                              "SWdown", "W m-2")
 
-!       CALL create_output_file(Tair_name, ncid_tair, tairID, tairtID,"Tair",   &
-!                              "Near surface air temperature",          &
-!                              "air_temperature",                       &
-!                              "Tair","K")
+       CALL create_output_file(Tair_name, "Tair",                      &
+                              "Near surface air temperature",          &
+                              "air_temperature",                       &
+                              "Tair","K")
 
-!       CALL create_output_file(Wind_name, ncid_wind, windID, windtID, "Wind",  &
-!                              "Near surface wind speed",               &
-!                              "wind_speed",                            &
-!                              "Wind","m s-1")
+       CALL create_output_file(Wind_name, "Wind",                      &
+                              "Near surface wind speed",               &
+                              "wind_speed",                            &
+                              "Wind","m s-1")
 
-!       CALL create_output_file(Qair_name, ncid_qair, qairID, qairtID, "Qair",  &
-!                              "Near surface specific humidity",        &
-!                              "specific_humidity",                     &
-!                              "Qair", "kg kg-1")
+       CALL create_output_file(Qair_name, "Qair",                      &
+                              "Near surface specific humidity",        &
+                              "specific_humidity",                     &
+                              "Qair", "kg kg-1")
 
-!       CALL create_output_file(PSurf_name, ncid_ps, psID, pstID, "PSurf",      &
-!                              "Surface Pressure",                      &
-!                              "surface_air_pressure",                  &
-!                              "PSurf", "Pa")
-
-        CALL GET_UNIT(iunit_rain)
-        OPEN (iunit_rain, file="rain.txt",action="write")
-        
-        CALL GET_UNIT(iunit_snow)
-        OPEN (iunit_snow, file="snow.txt",action="write")
-        
-        CALL GET_UNIT(iunit_lwdown)
-        OPEN (iunit_lwdown, file="lwdown.txt",action="write")
-        
-        CALL GET_UNIT(iunit_swdown)
-        OPEN (iunit_swdown, file="swdown.txt",action="write")
-        
-        CALL GET_UNIT(iunit_tair)
-        OPEN (iunit_tair, file="tair.txt",action="write")
-        
-        CALL GET_UNIT(iunit_wind)
-        OPEN (iunit_wind, file="wind.txt",action="write")
-        
-        CALL GET_UNIT(iunit_qair)
-        OPEN (iunit_qair, file="qair.txt",action="write")
-
-        CALL GET_UNIT(iunit_psurf)
-        OPEN (iunit_psurf, file="psurf.txt",action="write")
-
+       CALL create_output_file(PSurf_name, "PSurf",                    &
+                              "Surface Pressure",                      &
+                              "surface_air_pressure",                  &
+                              "PSurf", "Pa")
 
        DO ktau = kstart, kend !!!!!!
 
@@ -186,81 +147,49 @@ PROGRAM awap_to_netcdf
 
           ALLOCATE(data_temp(mland))
 
-          !PRINT *,"WG%Precip",data_temp
-          !PRINT *,"WG%Snow",WG%Snow
-          !PRINT *,"WG%Phild",WG%Phild
-          !PRINT *,"WG%PhiSd",WG%PhiSd
-          !PRINT *,"WG%Temp",WG%Temp
-          !PRINT *,"WG%Wind",WG%Wind
-          !PRINT *,"WG%QV",WG%QV
-          !PRINT *,"WG%PPa",WG%PPa
-
           data_temp = WG%Precip
-          WRITE (iunit_rain, '(F20.10)'), data_temp(335859) ! (400,300) 399*841+300
-!          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
-!                            .FALSE., ncid_rain, rainID, raintID)
+          CALL write_output(filename, Rainf_name, "Rainf", data_temp, dels,  &
+                            CurYear, ktau, kend, .FALSE.)
 
           data_temp = WG%Snow
-          WRITE (iunit_snow, '(F20.10)'), data_temp(335859)
-!          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
-!                            .FALSE., ncid_snow, snowID, snowtID)
+          CALL write_output(filename, Snow_name, "Snowf", data_temp, dels,   &
+                            CurYear, ktau, kend, .FALSE.)
 
           data_temp = WG%PhiLd
-          WRITE (iunit_lwdown, '(F20.10)'), data_temp(335859)
-!          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
-!                            .TRUE., ncid_lw  , lwID  , lwtID  )
+          CALL write_output(filename, LWdown_name, "LWdown", data_temp, dels,&
+                            CurYear, ktau, kend, .TRUE. )
 
           data_temp = WG%PhiSd
-          WRITE (iunit_swdown, '(F20.10)'), data_temp(335859)
-!          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
-!                            .TRUE., ncid_sw  , swID  , swtID  )
+          CALL write_output(filename, SWdown_name, "SWdown", data_temp, dels,&
+                            CurYear, ktau, kend, .TRUE. )
 
           data_temp = WG%Temp
-          WRITE (iunit_tair, '(F20.10)'), data_temp(335839)
-!          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
-!                            .FALSE., ncid_tair, tairID, tairtID)
+          CALL write_output(filename, Tair_name, "Tair", data_temp, dels,    &
+                            CurYear, ktau, kend, .FALSE.)
 
           data_temp = WG%Wind
-          WRITE (iunit_wind, '(F20.10)'), data_temp(335859)
-!          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
-!                            .TRUE., ncid_wind, windID, windtID)
+          CALL write_output(filename, Wind_name, "Wind", data_temp, dels,    &
+                            CurYear, ktau, kend, .TRUE. )
 
           data_temp = WG%QV
-          WRITE (iunit_qair, '(F20.10)'), data_temp(335859)
-!          !PRINT *,data_temp
-!          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
-!                            .FALSE., ncid_qair, qairID, qairtID)
+          CALL write_output(filename, Qair_name, "Qair", data_temp, dels,    &
+                            CurYear, ktau, kend, .FALSE.)
 
           data_temp = WG%PPa
-          WRITE (iunit_psurf, '(F20.10)'), data_temp(335859)
-!          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
-!                            .FALSE., ncid_ps  , psID  , pstID  )
+          CALL write_output(filename, PSurf_name, "PSurf", data_temp, dels,  &
+                            CurYear, ktau, kend, .FALSE.)
 
           DEALLOCATE(data_temp)
           PRINT*,"POINT 17 Finish output ", CurYear, "-", ktau
+
        END DO ! END Do loop over timestep ktau
 
-       CLOSE(iunit_rain)
-       CLOSE(iunit_snow)
-       CLOSE(iunit_lwdown)
-       CLOSE(iunit_swdown)
-       CLOSE(iunit_tair)
-       CLOSE(iunit_wind)
-       CLOSE(iunit_qair)
-       CLOSE(iunit_psurf)
-       
-!       ok = NF90_CLOSE(ncid_rain)
-!       ok = NF90_CLOSE(ncid_snow)
-!       ok = NF90_CLOSE(ncid_lw  )
-!       ok = NF90_CLOSE(ncid_sw  )
-!       ok = NF90_CLOSE(ncid_tair)
-!       ok = NF90_CLOSE(ncid_wind)
-!       ok = NF90_CLOSE(ncid_qair)
-!       ok = NF90_CLOSE(ncid_ps  )
        PRINT*,"POINT 18 Finish translating the year of ", CurYear
 
     END DO !YEAR
+
     PRINT *,"POINT 19 Done (*^_^*) "
+
 END PROGRAM awap_to_netcdf
 
 !--------------------------------------------------------------------------!
