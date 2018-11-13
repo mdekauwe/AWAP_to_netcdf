@@ -2,10 +2,13 @@
 FC = ifort #gfortran
 FCFLAGS = -g -c #-Wall -Wno-tabs
 
-NCDIR='/opt/local/lib/'
-NCMOD='/opt/local/include/'
+#NCDIR='/opt/local/lib/'
+#NCMOD='/opt/local/include/'
+NCDIR='/lib/'
+NCMOD='/include/'
 LD='-lnetcdf -lnetcdff'
-LDFLAGS='-L/opt/local/lib -O2'
+#LDFLAGS='-L/opt/local/lib -O2'
+LDFLAGS='-L/lib -O2'
 CINC = -I$(NCMOD)
 
 ## these are all the files we are compiling
