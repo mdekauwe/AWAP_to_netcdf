@@ -14,8 +14,8 @@ LSRC = awap_to_netcdf.f90 type_def.F90 bios_io.F90 bios_output.F90 \
 # this is the executable we are building
 PROG = awap_to_netcdf
 
-#compiler switches and flags
-CINC = -I$(NCMOD)
+# from the compiled object files
+OBJS	= ${LSRC:.F90=.o}
 
 #suffixes we use
 .SUFFIXES:
@@ -24,7 +24,6 @@ CINC = -I$(NCMOD)
 #default rules for these suffixes
 .F90.o:
 	$(FC) $(CFLAGS) -I$(NCMOD) -c $<
-
 
 # default target by convention is ``all''
 all : $(PROG)
