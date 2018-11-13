@@ -1,7 +1,6 @@
 # Compiler/Linker settings
 FC = ifort #gfortran
 CFLAGS='-O2'
-
 #NCDIR='/opt/local/lib/'
 #NCMOD='/opt/local/include/'
 NCDIR=/share/apps/netcdf/intel/4.1.3/lib
