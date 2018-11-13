@@ -1,5 +1,5 @@
 !--------------------------------------------------------------------------!
-!             	     M A I N   P R O G R A M                             !
+!             	     M A I N   P R O G R A M                               !
 !--------------------------------------------------------------------------!
 ! USAGE: This is the main program for AWAP_TO_NETCDF
 ! INCLUDE:type_def_mod, bios_io_mod, cable_bios_met_obs_params, &
@@ -112,42 +112,42 @@ PROGRAM awap_to_netcdf
                               "rainfall_flux",                         &
                               "Rainf", "kg m-2 s-1")
 
-       !CALL create_output_file(Snow_name, ncid_snow, snowID, snowtID, "Snowf", &
-       !                       "Snowfall rate",                         &
-       !                       "snowfall_flux",                         &
-       !                       "Snowf","kg m-2 s-1")
+       CALL create_output_file(Snow_name, ncid_snow, snowID, snowtID, "Snowf", &
+                              "Snowfall rate",                         &
+                              "snowfall_flux",                         &
+                              "Snowf","kg m-2 s-1")
 
-       !CALL create_output_file(LWdown_name, ncid_lw, lwID, lwtID, "LWdown",    &
-       !                        "Downward Longwave Radiation",          &
-       !                        "surface_downwelling_longwave_flux_in_air", &
-       !                        "LWdown","W m-2")
+       CALL create_output_file(LWdown_name, ncid_lw, lwID, lwtID, "LWdown",    &
+                               "Downward Longwave Radiation",          &
+                               "surface_downwelling_longwave_flux_in_air", &
+                               "LWdown","W m-2")
 
-       !CALL create_output_file(SWdown_name, ncid_sw, swID, swtID, "SWdown",    &
-       !                       "Downward Shortwave Radiation",          &
-       !                       "surface_downwelling_shortwave_flux_in_air", &
-       !                       "SWdown", "W m-2")
+       CALL create_output_file(SWdown_name, ncid_sw, swID, swtID, "SWdown",    &
+                              "Downward Shortwave Radiation",          &
+                              "surface_downwelling_shortwave_flux_in_air", &
+                              "SWdown", "W m-2")
 
-       !CALL create_output_file(Tair_name, ncid_tair, tairID, tairtID,"Tair",   &
-       !                       "Near surface air temperature",          &
-       !                       "air_temperature",                       &
-       !                       "Tair","K")
+       CALL create_output_file(Tair_name, ncid_tair, tairID, tairtID,"Tair",   &
+                              "Near surface air temperature",          &
+                              "air_temperature",                       &
+                              "Tair","K")
 
-       !CALL create_output_file(Wind_name, ncid_wind, windID, windtID, "Wind",  &
-       !                       "Near surface wind speed",               &
-       !                       "wind_speed",                            &
-       !                       "Wind","m s-1")
+       CALL create_output_file(Wind_name, ncid_wind, windID, windtID, "Wind",  &
+                              "Near surface wind speed",               &
+                              "wind_speed",                            &
+                              "Wind","m s-1")
 
-       !CALL create_output_file(Qair_name, ncid_qair, qairID, qairtID, "Qair",  &
-       !                       "Near surface specific humidity",        &
-       !                       "specific_humidity",                     &
-       !                       "Qair", "kg kg-1")
+       CALL create_output_file(Qair_name, ncid_qair, qairID, qairtID, "Qair",  &
+                              "Near surface specific humidity",        &
+                              "specific_humidity",                     &
+                              "Qair", "kg kg-1")
 
-       !CALL create_output_file(PSurf_name, ncid_ps, psID, pstID, "PSurf",      &
-       !                       "Surface Pressure",                      &
-       !                       "surface_air_pressure",                  &
-       !                       "PSurf", "Pa")
+       CALL create_output_file(PSurf_name, ncid_ps, psID, pstID, "PSurf",      &
+                              "Surface Pressure",                      &
+                              "surface_air_pressure",                  &
+                              "PSurf", "Pa")
 
-       DO ktau = kstart, kend
+       DO ktau = kstart, 3 ! kend !!!!!!
 
           PRINT *,"POINT 11 ktau ", ktau ! Debug
 
@@ -159,42 +159,51 @@ PROGRAM awap_to_netcdf
 
           ALLOCATE(data_temp(mland))
 
+          !PRINT *,"WG%Precip",data_temp
+          !PRINT *,"WG%Snow",WG%Snow
+          !PRINT *,"WG%Phild",WG%Phild
+          !PRINT *,"WG%PhiSd",WG%PhiSd
+          !PRINT *,"WG%Temp",WG%Temp
+          !PRINT *,"WG%Wind",WG%Wind
+          !PRINT *,"WG%QV",WG%QV
+          !PRINT *,"WG%PPa",WG%PPa
+
           data_temp = WG%Precip
           CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
                             .FALSE., ncid_rain, rainID, raintID)
-          !data_temp = WG%Snow
-          !CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
-          !                  .FALSE., ncid_snow, snowID, snowtID)
-          !data_temp = WG%PhiLd
-          !CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
-          !                  .TRUE., ncid_lw  , lwID  , lwtID  )
-          !data_temp = WG%PhiSd
-          !CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
-          !                  .TRUE., ncid_sw  , swID  , swtID  )
-          !data_temp = WG%Temp
-          !CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
-          !                  .FALSE., ncid_tair, tairID, tairtID)
-          !data_temp = WG%Wind
-          !CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
-          !                  .TRUE., ncid_wind, windID, windtID)
-          !data_temp = WG%QV
-          !CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
-          !                  .FALSE., ncid_qair, qairID, qairtID)
-          !data_temp = WG%PPa
-          !CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
-          !                  .FALSE., ncid_ps  , psID  , pstID  )
+          data_temp = WG%Snow
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
+                            .FALSE., ncid_snow, snowID, snowtID)
+          data_temp = WG%PhiLd
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
+                            .TRUE., ncid_lw  , lwID  , lwtID  )
+          data_temp = WG%PhiSd
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
+                            .TRUE., ncid_sw  , swID  , swtID  )
+          data_temp = WG%Temp
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
+                            .FALSE., ncid_tair, tairID, tairtID)
+          data_temp = WG%Wind
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
+                            .TRUE., ncid_wind, windID, windtID)
+          data_temp = WG%QV
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
+                            .FALSE., ncid_qair, qairID, qairtID)
+          data_temp = WG%PPa
+          CALL write_output(filename, data_temp, dels, CurYear, ktau, kend, &
+                            .FALSE., ncid_ps  , psID  , pstID  )
           DEALLOCATE(data_temp)
           PRINT*,"POINT 17 Finish output ", CurYear, "-", ktau
        END DO ! END Do loop over timestep ktau
 
        ok = NF90_CLOSE(ncid_rain)
-       !ok = NF90_CLOSE(ncid_snow)
-       !ok = NF90_CLOSE(ncid_lw  )
-       !ok = NF90_CLOSE(ncid_sw  )
-       !ok = NF90_CLOSE(ncid_tair)
-       !ok = NF90_CLOSE(ncid_wind)
-       !ok = NF90_CLOSE(ncid_qair)
-       !ok = NF90_CLOSE(ncid_ps  )
+       ok = NF90_CLOSE(ncid_snow)
+       ok = NF90_CLOSE(ncid_lw  )
+       ok = NF90_CLOSE(ncid_sw  )
+       ok = NF90_CLOSE(ncid_tair)
+       ok = NF90_CLOSE(ncid_wind)
+       ok = NF90_CLOSE(ncid_qair)
+       ok = NF90_CLOSE(ncid_ps  )
        PRINT*,"POINT 18 Finish translating the year of ", CurYear
 
     END DO !YEAR
