@@ -6,7 +6,7 @@ CFLAGS='-O2'
 #NCMOD='/opt/local/include/'
 NCDIR=/share/apps/netcdf/intel/4.1.3/lib
 NCMOD=/share/apps/netcdf/intel/4.1.3/include
-LDFLAGS='-L/lib -O2 -L$(NCDIR) -lnetcdf -lnetcdff'
+LDFLAGS=-L/lib -O2 -L$(NCDIR) -lnetcdf -lnetcdff
 
 ## these are all the files we are compiling
 LSRC = awap_to_netcdf.f90 type_def.F90 bios_io.F90 bios_output.F90 \
