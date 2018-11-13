@@ -6,7 +6,7 @@ CFLAGS='-O2'
 #NCMOD='/opt/local/include/'
 NCDIR='/share/apps/netcdf/intel/4.1.3/lib'
 NCMOD='/share/apps/netcdf/intel/4.1.3/include'
-LD='-lnetcdf -lnetcdff'
+LD =  -L$(NCDIR) -lnetcdf -lnetcdff
 #LDFLAGS='-L/opt/local/lib -O2'
 LDFLAGS='-L/lib -O2'
 CINC = -I$(NCMOD)
@@ -36,7 +36,7 @@ all : $(PROG)
 #build PROG (cable executable) by linking all objects
 #$(PROG) : $(OBJS)
 $(PROG) : awap_to_netcdf.o
-	$(FC) $(LDFLAGS) $(NCDIR) -o $@ $(OBJS) $(LD)
+	$(FC) $(LDFLAGS) -o $@ $(OBJS) $(LD)
 
 
 # dependencies
