@@ -207,12 +207,13 @@ MODULE bios_output
       END DO
       DEALLOCATE(mask_value )
       PRINT *,"It is OK 4"
-
-      IF (ocnmask) THEN
-         WHERE ( met_2D_temp == -999.)
-             met_2D = -999.
-         END WHERE
-      END IF
+     
+      !!!!!!!!!!!!!!!!!!!!
+      !IF (ocnmask) THEN
+      !   WHERE ( met_2D_temp == -999.)
+      !       met_2D = -999.
+      !   END WHERE
+      !END IF
       DEALLOCATE(met_2D_temp )
       PRINT *,"It is OK 5"
 
