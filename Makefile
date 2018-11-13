@@ -1,6 +1,6 @@
 # Compiler/Linker settings
 FC = ifort #gfortran
-FCFLAGS = -g -c #-Wall -Wno-tabs
+CFLAGS='-O2'
 
 #NCDIR='/opt/local/lib/'
 #NCMOD='/opt/local/include/'
@@ -27,7 +27,7 @@ CINC = -I$(NCMOD)
 
 #default rules for these suffixes
 .F90.o:
-	$(FC) $(FCFLAGS) $(CINC) -c $<
+	$(FC) $(CFLAGS) $(CINC) -c $<
 
 
 # default target by convention is ``all''
