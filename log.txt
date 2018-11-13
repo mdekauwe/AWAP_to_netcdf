@@ -1,0 +1,52 @@
+ POINT 1 Reading input and output paths
+ find /short/w35/mm3972/data/AWAP_data/awap_rain_mm_day_2000-2017 -name "*.flt" 
+ -fls ./temp.txt
+ wc -l <./temp.txt  >./filenum.txt
+ POINT 2 the number of met files         6575
+ POINT 3 Headfile:  
+ /short/w35/mm3972/data/AWAP_data/awap_rain_mm_day_2000-2017/2017/bom-rain_recal
+ -day-20170626-20170626.hdr                                                     
+                                           
+ MaskCols, MaskRows          841         681
+ MaskBndW, MaskBndS    111.9750      -44.02500    
+ CellSize,NoDataVal   5.0000001E-02  -999.0000    
+ POINT 4 mland       572721
+ POINT 5 calculating latitude
+ POINT 6 finishing weathergenerator initialisation
+ POINT 7 input filenames, e.g. 
+ /short/w35/mm3972/data/AWAP_data/awap_rain_mm_day_2000-2017/2017/bom-rain_recal
+ -day-20171231-20171231.flt
+ POINT 8 CurYear, LOY, kend         2000         366        2928
+ POINT 9 Rainf_name 
+ /short/w35/mm3972/data/AWAP_to_netcdf/Rainf/AWAP.Rainf.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/Rainf/AWAP.Rainf.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/Snowf/AWAP.Snowf.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/LWdown/AWAP.LWdown.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/SWdown/AWAP.SWdown.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/Tair/AWAP.Tair.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/Wind/AWAP.Wind.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/Qair/AWAP.Qair.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/PSurf/AWAP.PSurf.3hr.2000.nc
+ POINT 11 ktau            1
+ POINT 12 hod, doy, year  0.0000000E+00   1.000000       2000.000    
+ POINT 13 counter            1
+ POINT 14 name of rain file
+ /short/w35/mm3972/data/AWAP_data/awap_rain_mm_day_2000-2017/2000/bom-rain_recal
+ -day-20000101-20000101.flt
+ POINT 15 finished cable_bios_read_met
+ POINT 16 finished WGEN_SUBDIURNAL_MET
+ POINT-B ncid_out, varID, tvar       65536           4           1
+ timetemp   78888.0000000000     
+ met_2D(400,300)   0.0000000E+00
+ POINT-B ncid_out, varID, tvar      131072           4           1
+ timetemp   78888.0000000000     
+ met_2D(400,300)   0.0000000E+00
+ POINT-B ncid_out, varID, tvar      196608           4           1
