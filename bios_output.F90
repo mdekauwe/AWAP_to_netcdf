@@ -168,51 +168,53 @@ MODULE bios_output
 
       TYPE(FILE_NAME)     :: filename
 
-      ! ALLOCATE(met_1D(mland)                  )
       ALLOCATE(met_2D_temp(MaskCols, MaskRows))
       ALLOCATE(mask_2D(MaskCols, MaskRows)    )
-      ALLOCATE(mask_value(MaskRows, MaskCols) )
-
-      ! PRINT *,"POINT 13 ALLOCATE"
+  
       PRINT *, "POINT-B ncid_out, varID, tvar", ncid_out, varID, tvar
-      met_2D_temp = -999.
+    
+      met_2D_temp = -999.     
+      mask_2D = .TRUE.
+
+      met_2D_temp  = UNPACK(met_1D, mask_2D, met_2D_temp)
+      ! Debug: need to check the map of default value distribution
+     
+      DEALLOCATE(mask_2D    )
+      PRINT *,"It is OK"
+      
+      ALLOCATE(met_2D(MaskCols, MaskRows)     )
+   
+      ! reverse lat
+      DO rows = 1, MaskRows
+         met_2D(:,rows) = met_2D_temp(:, MaskRows + 1 - rows)
+         ! TRICK, FORTRAN processes in a column priority way
+      END DO
+      ! WIND & RADIATION OVER OCEAN ARE DEFAULT value
+      PRINT *,"It is OK 2"
+      
+      ALLOCATE(mask_value(MaskRows, MaskCols) )
 
       CALL GET_UNIT(iunit)
       OPEN (iunit, file=TRIM(filename%swdown_file(1)), FORM='BINARY', &
            status="old",action="read")
       READ(iunit) mask_value
       CLOSE(iunit)
+      PRINT *,"It is OK 3"
 
-      ! PRINT *,"POINT 14 SWDOWN mask_value"
+      met_2D_temp = -999.
+      DO rows = 1, MaskRows
+         met_2D_temp(:,rows) = mask_value(rows,:)
+      END DO
+      DEALLOCATE(mask_value )
+      PRINT *,"It is OK 4"
 
       IF (ocnmask) THEN
-         WHERE ( mask_value == -999.)
-             mask_2D = .FALSE.
-         ELSEWHERE
-             mask_2D = .TRUE.
+         WHERE ( met_2D_temp == -999.)
+             met_2D = -999.
          END WHERE
-      ELSE
-         mask_2D = .TRUE.
       END IF
-
-      DEALLOCATE(mask_value )
-
-      met_2D_temp  = UNPACK(met_1D, mask_2D, met_2D_temp)
-      ! PRINT *,met_2D_temp
-      ! Debug: need to check the map of default value distribution
-      DEALLOCATE(mask_2D    )
-
-      ALLOCATE(met_2D(MaskCols, MaskRows)     )
-    ! reverse lat
-      DO rows = 1, MaskRows
-         met_2D(:,rows) = met_2D_temp(:, MaskRows + 1 - rows)
-         ! TRICK, FORTRAN processes in a column priority way
-      END DO
-
-      !!!!!!!! WIND & RADIATION OVER OCEAN ARE DEFAULT value
-      ! check whether the longwave and other var are default over ocean
-
-      DEALLOCATE(met_2D_temp)
+      DEALLOCATE(met_2D_temp )
+      PRINT *,"It is OK 5"
 
       ! PRINT *,"POINT 15 DEALLOCATE"
 
@@ -231,12 +233,13 @@ MODULE bios_output
       ok = NF90_PUT_VAR(ncid_out, tvar, timetemp, start = (/ktau/), count = (/1/))
       IF(ok /= NF90_NOERR)  PRINT *, 'Error writing time ',TRIM(nf90_strerror(ok))
     ! timetemp shouldn't accumulate
-
+      PRINT *,"timetemp", timetemp
     ! From write_output_variable_r1 in cable_write.F90
       ok = NF90_PUT_VAR(ncid_out, varID, REAL(met_2D, 4), start = (/1,1,ktau/),&
            count = (/MaskCols, MaskRows, 1/)) ! write data to file
       IF(ok /= NF90_NOERR)  PRINT *, 'Error writing var ', TRIM(nf90_strerror(ok))
-      !PRINT *,"POINT 15.5 met_2D",met_2D
+     
+      PRINT *,"met_2D(400,300) ",met_2D(400,300)
 
       DEALLOCATE( met_2D )
 

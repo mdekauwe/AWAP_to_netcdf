@@ -374,9 +374,12 @@ CONTAINS
 ! -----------------------------------
       !WG%VapPmb = WG%VapPmbDay
       WG%PPa    = WG%PPaDay * 100. ! PSurf/GSWP3.BC.PSurf.3hrMap, pressure 1 [mb] = 100 [Pa]
+      PRINT *,"WG%PPaDay(58888)",WG%PPaDay(58888) !!!!!
+      PRINT *,"WG%PPa(58888)",WG%PPa(58888)       !!!!!
+
 ! ********************* MMY ************************
       IF (ritime <= 9.) THEN
-    ! before 9am
+   ! before 9am
           WG%VapPPa = WG%VapPPa1500Prev +  &
                      (WG%VapPPa0900 - WG%VapPPa1500Prev) * (9. + ritime)/18.
       ELSEIF (ritime > 9 .AND. ritime <= 15.) THEN
@@ -389,11 +392,13 @@ CONTAINS
                      (WG%VapPPa0900Next - WG%VapPPa1500) * (ritime - 15.)/18.
       END IF
       WG%VapPPa = WG%VapPPa * 100.
+      PRINT *,"WG%VapPPa(58888)",WG%VapPPa(58888) !!!!!
 
 ! -----------------------------------
 ! Specific Humidity from cable_bios_met_obs_params - MMY
 ! -----------------------------------
       WG%QV     = WG%VapPPa/WG%PPa*RMWbyRMA ! Qair/GSWP3.BC.Qair.3hrMap, specific humidity (kg/kg)
+      PRINT *,"WG%QV(58888)",WG%QV(58888) !!!!!
 
 ! ----------------------------
 ! Downward longwave irradiance

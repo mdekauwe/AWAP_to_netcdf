@@ -105,7 +105,7 @@ MODULE bios_io_mod !    MMY
       OPEN (iunit, file="filenum.txt",status="old",action="read")
       READ (iunit, *) file_num
       CLOSE(iunit)
-      ok = systemqq('rm ./filenum.txt')
+      !ok = systemqq('rm ./filenum.txt')
 
    ! READING MET DATA
       ! rain

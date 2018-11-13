@@ -297,6 +297,8 @@ MODULE cable_bios_met_obs_params
               WG%SnowDay    = 0.0
           END WHERE
 
+          WG%PPaDay = 1000.0 ! Air pressure in Pa fixed in space and time
+
           CALL WGEN_DAILY_CONSTANTS( WG, mland, INT(doy)+1 )
 
       END IF !newday
