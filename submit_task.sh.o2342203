@@ -1,0 +1,356 @@
+mkdir: cannot create directory `/short/w35/mm3972/data/AWAP_to_netcdf/Rainf': File exists
+mkdir: cannot create directory `/short/w35/mm3972/data/AWAP_to_netcdf/Snowf': File exists
+mkdir: cannot create directory `/short/w35/mm3972/data/AWAP_to_netcdf/LWdown': File exists
+mkdir: cannot create directory `/short/w35/mm3972/data/AWAP_to_netcdf/SWdown': File exists
+mkdir: cannot create directory `/short/w35/mm3972/data/AWAP_to_netcdf/Tair': File exists
+mkdir: cannot create directory `/short/w35/mm3972/data/AWAP_to_netcdf/Wind': File exists
+mkdir: cannot create directory `/short/w35/mm3972/data/AWAP_to_netcdf/Qair': File exists
+mkdir: cannot create directory `/short/w35/mm3972/data/AWAP_to_netcdf/PSurf': File exists
+ POINT 1 Reading input and output paths
+ find /short/w35/mm3972/data/AWAP_data/awap_rain_mm_day_2000-2017 -name "*.flt" 
+ -fls ./temp.txt
+ wc -l <./temp.txt  >./filenum.txt
+ POINT 2 the number of met files         6575
+ POINT 3 Headfile:  
+ /short/w35/mm3972/data/AWAP_data/awap_rain_mm_day_2000-2017/2017/bom-rain_recal
+ -day-20170626-20170626.hdr                                                     
+                                           
+ MaskCols, MaskRows          841         681
+ MaskBndW, MaskBndS    111.9750      -44.02500    
+ CellSize,NoDataVal   5.0000001E-02  -999.0000    
+ POINT 4 mland       572721
+ POINT 5 calculating latitude
+ POINT 6 finishing weathergenerator initialisation
+ POINT 7 input filenames, e.g. 
+ /short/w35/mm3972/data/AWAP_data/awap_rain_mm_day_2000-2017/2017/bom-rain_recal
+ -day-20171231-20171231.flt
+ POINT 8 CurYear, LOY, kend         2000         366        2928
+ POINT 9 Rainf_name 
+ /short/w35/mm3972/data/AWAP_to_netcdf/Rainf/AWAP.Rainf.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/Rainf/AWAP.Rainf.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/Snowf/AWAP.Snowf.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/LWdown/AWAP.LWdown.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/SWdown/AWAP.SWdown.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/Tair/AWAP.Tair.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/Wind/AWAP.Wind.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/Qair/AWAP.Qair.3hr.2000.nc
+ POINT 10 created output file 
+ /short/w35/mm3972/data/AWAP_to_netcdf/PSurf/AWAP.PSurf.3hr.2000.nc
+ POINT 11 ktau            1
+ POINT 12 hod, doy, year  0.0000000E+00   1.000000       2000.000    
+ POINT 13 counter            1
+ POINT 14 name of rain file
+ /short/w35/mm3972/data/AWAP_data/awap_rain_mm_day_2000-2017/2000/bom-rain_recal
+ -day-20000101-20000101.flt
+ POINT 15 finished cable_bios_read_met
+ WG%PPaDay(58888)   1000.00000000000     
+ WG%PPa(58888)   100000.000000000     
+ WG%VapPPa(58888)   3614.50004577637     
+ WG%QV(58888)  2.247802289760557E-002
+ POINT 16 finished WGEN_SUBDIURNAL_MET
+ POINT-B ncid_out, varID, tvar       65536           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78888.0000000000     
+ met_2D(400,300)   0.0000000E+00
+ POINT-B ncid_out, varID, tvar      131072           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78888.0000000000     
+ met_2D(400,300)   0.0000000E+00
+ POINT-B ncid_out, varID, tvar      196608           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78888.0000000000     
+ met_2D(400,300)    325.5487    
+ POINT-B ncid_out, varID, tvar      262144           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78888.0000000000     
+ met_2D(400,300)   0.0000000E+00
+ POINT-B ncid_out, varID, tvar      327680           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78888.0000000000     
+ met_2D(400,300)    289.4672    
+ POINT-B ncid_out, varID, tvar      393216           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78888.0000000000     
+ met_2D(400,300)    1.288320    
+ POINT-B ncid_out, varID, tvar      458752           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78888.0000000000     
+ met_2D(400,300)   5.1367679E-03
+ POINT-B ncid_out, varID, tvar      524288           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78888.0000000000     
+ met_2D(400,300)    100000.0    
+ POINT 17 Finish output         2000 -           1
+ POINT 11 ktau            2
+ POINT 12 hod, doy, year   3.000000       1.000000       2000.000    
+ POINT 15 finished cable_bios_read_met
+ WG%PPaDay(58888)   1000.00000000000     
+ WG%PPa(58888)   100000.000000000     
+ WG%VapPPa(58888)   3550.66668192546     
+ WG%QV(58888)  2.208105297200033E-002
+ POINT 16 finished WGEN_SUBDIURNAL_MET
+ POINT-B ncid_out, varID, tvar       65536           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78891.0000000000     
+ met_2D(400,300)   0.0000000E+00
+ POINT-B ncid_out, varID, tvar      131072           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78891.0000000000     
+ met_2D(400,300)   0.0000000E+00
+ POINT-B ncid_out, varID, tvar      196608           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78891.0000000000     
+ met_2D(400,300)    317.4528    
+ POINT-B ncid_out, varID, tvar      262144           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78891.0000000000     
+ met_2D(400,300)   0.0000000E+00
+ POINT-B ncid_out, varID, tvar      327680           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78891.0000000000     
+ met_2D(400,300)    287.6505    
+ POINT-B ncid_out, varID, tvar      393216           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78891.0000000000     
+ met_2D(400,300)    1.288320    
+ POINT-B ncid_out, varID, tvar      458752           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78891.0000000000     
+ met_2D(400,300)   5.4145432E-03
+ POINT-B ncid_out, varID, tvar      524288           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78891.0000000000     
+ met_2D(400,300)    100000.0    
+ POINT 17 Finish output         2000 -           2
+ POINT 11 ktau            3
+ POINT 12 hod, doy, year   6.000000       1.000000       2000.000    
+ POINT 15 finished cable_bios_read_met
+ WG%PPaDay(58888)   1000.00000000000     
+ WG%PPa(58888)   100000.000000000     
+ WG%VapPPa(58888)   3486.83331807454     
+ WG%QV(58888)  2.168408304639509E-002
+ POINT 16 finished WGEN_SUBDIURNAL_MET
+ POINT-B ncid_out, varID, tvar       65536           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78894.0000000000     
+ met_2D(400,300)   0.0000000E+00
+ POINT-B ncid_out, varID, tvar      131072           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78894.0000000000     
+ met_2D(400,300)   0.0000000E+00
+ POINT-B ncid_out, varID, tvar      196608           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78894.0000000000     
+ met_2D(400,300)    318.0627    
+ POINT-B ncid_out, varID, tvar      262144           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78894.0000000000     
+ met_2D(400,300)    173.1663    
+ POINT-B ncid_out, varID, tvar      327680           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78894.0000000000     
+ met_2D(400,300)    286.5800    
+ POINT-B ncid_out, varID, tvar      393216           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78894.0000000000     
+ met_2D(400,300)    3.864960    
+ POINT-B ncid_out, varID, tvar      458752           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78894.0000000000     
+ met_2D(400,300)   5.6923181E-03
+ POINT-B ncid_out, varID, tvar      524288           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78894.0000000000     
+ met_2D(400,300)    100000.0    
+ POINT 17 Finish output         2000 -           3
+ POINT 11 ktau            4
+ POINT 12 hod, doy, year   9.000000       1.000000       2000.000    
+ POINT 15 finished cable_bios_read_met
+ WG%PPaDay(58888)   1000.00000000000     
+ WG%PPa(58888)   100000.000000000     
+ WG%VapPPa(58888)   3422.99995422363     
+ WG%QV(58888)  2.128711312078985E-002
+ POINT 16 finished WGEN_SUBDIURNAL_MET
+ POINT-B ncid_out, varID, tvar       65536           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78897.0000000000     
+ met_2D(400,300)   0.0000000E+00
+ POINT-B ncid_out, varID, tvar      131072           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78897.0000000000     
+ met_2D(400,300)   0.0000000E+00
+ POINT-B ncid_out, varID, tvar      196608           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78897.0000000000     
+ met_2D(400,300)    338.2933    
+ POINT-B ncid_out, varID, tvar      262144           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78897.0000000000     
+ met_2D(400,300)    693.0269    
+ POINT-B ncid_out, varID, tvar      327680           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78897.0000000000     
+ met_2D(400,300)    286.5800    
+ POINT-B ncid_out, varID, tvar      393216           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78897.0000000000     
+ met_2D(400,300)    3.864960    
+ POINT-B ncid_out, varID, tvar      458752           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78897.0000000000     
+ met_2D(400,300)   5.9700934E-03
+ POINT-B ncid_out, varID, tvar      524288           4           1
+ It is OK
+ It is OK 2
+ It is OK 3
+ It is OK 4
+ It is OK 5
+ timetemp   78897.0000000000     
+ met_2D(400,300)    100000.0    
+ POINT 17 Finish output         2000 -           4
+ POINT 18 Finish translating the year of         2000
+ POINT 19 Done (*^_^*) 
+
+======================================================================================
+                  Resource Usage on 2018-11-13 19:38:24:
+   Job Id:             2342203.r-man2
+   Project:            w35
+   Exit Status:        0
+   Service Units:      0.03
+   NCPUs Requested:    1                      NCPUs Used: 1               
+                                           CPU Time Used: 00:00:06                                   
+   Memory Requested:   10.0GB                Memory Used: 0B              
+   Walltime requested: 00:10:00            Walltime Used: 00:00:37        
+   JobFS requested:    100.0MB                JobFS used: 0B              
+======================================================================================
